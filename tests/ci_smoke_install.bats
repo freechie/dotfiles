@@ -26,6 +26,7 @@ make_mock_repo() {
 set -euo pipefail
 echo "\${*:-<none>}" >> "$repo/install.log"
 echo "DOTFILES_CI_SMOKE_INSTALL=\${DOTFILES_CI_SMOKE_INSTALL:-}" >> "$repo/install-env.log"
+echo "\${HOMEBREW_BUNDLE_CASK_SKIP:-}" >> "$repo/brew-cask-skip.log"
 mkdir -p "$HOME/.config"
 ln -snf "$repo/platforms/$platform_dir/.zshrc" "$HOME/.zshrc"
 ln -snf "$repo/platforms/$platform_dir/.bash_profile" "$HOME/.bash_profile"
@@ -166,6 +167,14 @@ EOF
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
   [ "$output" = $'<none>\n--skip-deps' ]
+
+  run sed -n '1p' "$repo/brew-cask-skip.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = "basictex" ]
+
+  run sed -n '2p' "$repo/brew-cask-skip.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {
