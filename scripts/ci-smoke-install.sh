@@ -51,6 +51,10 @@ smoke_install_skip_deps() {
     printf 'y\n' | DOTFILES_CI_SMOKE_INSTALL=1 ./install.sh --skip-deps
 }
 
+smoke_install_macos_full() {
+    printf 'y\n' | HOMEBREW_BUNDLE_CASK_SKIP=basictex ./install.sh
+}
+
 assert_core_tools() {
     command -v zsh
     command -v tmux
@@ -104,7 +108,7 @@ case "$platform" in
     macos)
         case "$mode" in
             full)
-                printf 'y\n' | ./install.sh
+                smoke_install_macos_full
                 printf 'y\n' | ./install.sh --skip-deps
                 ;;
             skip-deps)
