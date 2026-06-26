@@ -52,7 +52,7 @@ smoke_install_skip_deps() {
 }
 
 smoke_install_macos_full() {
-    printf 'y\n' | HOMEBREW_BUNDLE_CASK_SKIP=basictex ./install.sh
+    printf 'y\n' | ./install.sh
 }
 
 assert_core_tools() {

@@ -831,7 +831,6 @@ build_link_specs() {
         ".gitignore_global|$HOME/.gitignore_global|.gitignore_global in home directory"
         "nvim|$HOME/.config/nvim|nvim in ~/.config directory"
         "$platform_dir/starship.toml|$HOME/.config/starship.toml|starship.toml in ~/.config directory"
-        "claude/CLAUDE.md|$HOME/.claude/CLAUDE.md|Claude Code config"
     )
 
     local ghostty_target

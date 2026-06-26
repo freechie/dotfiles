@@ -58,5 +58,5 @@ function bbu {
     return 1
   fi
 
-  brew bundle dump --file="$snapshot" --force && echo "Brewfile.snapshot updated; move intentional entries into Brewfile manually."
+  brew bundle dump --file="$snapshot" --force && echo "Brewfile.snapshot updated; move intentional entries into the appropriate Brewfile profile manually."
 }

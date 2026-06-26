@@ -191,7 +191,7 @@ EOF
   [ "$output" = "brew not installed" ]
 }
 
-@test "bbu writes ignored snapshot instead of overwriting Brewfile" {
+@test "bbu writes ignored snapshot instead of overwriting Brewfile profiles" {
   local bin_dir="$BATS_TEST_TMPDIR/bin"
   mkdir -p "$bin_dir"
 
@@ -204,7 +204,7 @@ EOF
 
   run env PATH="$bin_dir:/usr/bin:/bin" BREW_ARGS_FILE="$BATS_TEST_TMPDIR/brew.args" zsh -c "DOTFILES_PLATFORM=linux source .zshrc 2>/tmp/zshrc_err; bbu"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Brewfile.snapshot updated; move intentional entries into Brewfile manually."* ]]
+  [[ "$output" == *"Brewfile.snapshot updated; move intentional entries into the appropriate Brewfile profile manually."* ]]
 
   run cat "$BATS_TEST_TMPDIR/brew.args"
   [ "$status" -eq 0 ]

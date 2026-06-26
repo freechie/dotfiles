@@ -23,12 +23,30 @@ then creates symlinks for the tracked configs.
 
 ## Platforms
 
-- macOS: installs Homebrew dependencies from `Brewfile`.
+- macOS: installs core Homebrew dependencies from `Brewfile`.
 - Ubuntu/Linux: installs core packages with `apt` and a pinned upstream Neovim
   release into `~/.local`.
 
 Linux support is Ubuntu/Debian-first. Other distributions should install
 equivalent packages manually, then use `./install.sh --skip-deps`.
+
+Optional macOS workstation profiles are tracked separately and installed
+manually when needed:
+
+```bash
+brew bundle --file=Brewfile.terminal-gui
+brew bundle --file=Brewfile.vscode
+brew bundle --file=Brewfile.heavy
+```
+
+The personal macOS profile includes a third-party tap and requires explicit
+trust before installing `dark-notify`:
+
+```bash
+brew tap cormacrelf/tap
+brew trust --formula cormacrelf/tap/dark-notify
+brew bundle --file=Brewfile.personal-macos
+```
 
 ## What Is Managed
 
@@ -38,7 +56,6 @@ equivalent packages manually, then use `./install.sh --skip-deps`.
 - Ghostty: platform configs in `ghostty/`
 - Starship: platform configs under `platforms/`
 - Git: `.gitconfig`, `.gitignore_global`
-- Claude Code: `claude/CLAUDE.md`
 
 `config/toolchain.sh` is the source of truth for package lists, minimum tool
 versions, pinned installer URLs, and SHA256 checksums.
@@ -58,7 +75,7 @@ consistency, bootstrap smoke tests, and CI smoke flows.
 
 GitHub Actions runs tests on Ubuntu and macOS, runs Gitleaks, and performs
 cross-platform smoke installs. A separate full-bootstrap workflow covers the
-heavier install path.
+default dependency install path.
 
 Actions are pinned to immutable SHAs. Refresh an action by resolving the
 desired tag with `git ls-remote`, updating the SHA, and keeping the inline
@@ -73,7 +90,7 @@ bbu
 ```
 
 `bbu` writes an ignored `Brewfile.snapshot`. Review it and manually move
-intentional package changes into `Brewfile`.
+intentional package changes into the appropriate Brewfile profile.
 
 Refresh Neovim plugins through Lazy, then commit the resulting
 `nvim/lazy-lock.json` changes when the pin updates are intentional.
