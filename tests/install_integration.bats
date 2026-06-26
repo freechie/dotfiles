@@ -211,8 +211,6 @@ EOF
   [[ "$(readlink "$HOME/.gitignore_global")" == "$dir/.gitignore_global" ]]
   [ -L "$HOME/Library/Application Support/com.mitchellh.ghostty/config" ]
   [[ "$(readlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config")" == "$dir/ghostty/config.macos" ]]
-  [ -L "$HOME/.claude/CLAUDE.md" ]
-  [[ "$(readlink "$HOME/.claude/CLAUDE.md")" == "$dir/claude/CLAUDE.md" ]]
 }
 
 @test "install.sh backups existing files correctly" {

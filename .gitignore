@@ -222,7 +222,6 @@ poetry.toml
 # Repo-local generated artifacts
 nvim/python-venv/
 nvim/nvim
-GEMINI.md
 pyrightconfig.json
 
 ### VisualStudioCode ###
@@ -245,7 +244,3 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,visualstudiocode
-
-nvim/python-venv/
-GEMINI.md
-.codex

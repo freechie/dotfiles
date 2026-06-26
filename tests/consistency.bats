@@ -47,7 +47,6 @@
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"
-    "claude/CLAUDE.md"
   )
 
   for f in "${expected[@]}"; do
@@ -55,18 +54,50 @@
   done
 }
 
-@test "Brewfile exists and is non-empty" {
-  [ -f "Brewfile" ]
-  local lines
-  lines=$(grep -cv '^\s*#\|^\s*$' Brewfile)
-  [ "$lines" -gt 0 ]
+@test "Homebrew profile files exist and are non-empty" {
+  local profile
+  for profile in Brewfile Brewfile.personal-macos Brewfile.terminal-gui Brewfile.vscode Brewfile.heavy; do
+    [ -f "$profile" ]
+    local lines
+    lines=$(grep -cv '^\s*#\|^\s*$' "$profile")
+    [ "$lines" -gt 0 ]
+  done
 }
 
-@test "Brewfile includes macOS casks and VS Code extensions" {
-  grep -q '^cask "visual-studio-code"$' Brewfile
-  grep -q '^cask "unnaturalscrollwheels"$' Brewfile
-  grep -q '^vscode "ms-python.python"$' Brewfile
+@test "core Brewfile excludes optional macOS profiles" {
+  ! grep -q '^tap "cormacrelf/tap"$' Brewfile
+  ! grep -q '^brew "cormacrelf/tap/dark-notify"$' Brewfile
+  ! grep -q '^brew "grafana"$' Brewfile
+  ! grep -q '^brew "postgresql@18", link: true$' Brewfile
+  ! grep -q '^cask "basictex"$' Brewfile
+  ! grep -q '^cask "font-fira-code-nerd-font"$' Brewfile
+  ! grep -q '^cask "font-ubuntu-mono-nerd-font"$' Brewfile
+  ! grep -q '^cask "font-ubuntu-sans-nerd-font"$' Brewfile
+  ! grep -q '^cask "unnaturalscrollwheels"$' Brewfile
+  ! grep -q '^cask "visual-studio-code"$' Brewfile
+  ! grep -q '^vscode ' Brewfile
   grep -q '^brew "ffmpeg"$' Brewfile
+}
+
+@test "optional Homebrew profiles contain moved packages" {
+  local vscode_count
+
+  grep -q '^tap "cormacrelf/tap"$' Brewfile.personal-macos
+  grep -q '^brew "cormacrelf/tap/dark-notify"$' Brewfile.personal-macos
+  grep -q '^cask "unnaturalscrollwheels"$' Brewfile.personal-macos
+
+  grep -q '^cask "font-fira-code-nerd-font"$' Brewfile.terminal-gui
+  grep -q '^cask "font-ubuntu-mono-nerd-font"$' Brewfile.terminal-gui
+  grep -q '^cask "font-ubuntu-sans-nerd-font"$' Brewfile.terminal-gui
+
+  grep -q '^brew "grafana"$' Brewfile.heavy
+  grep -q '^brew "postgresql@18", link: true$' Brewfile.heavy
+  grep -q '^cask "basictex"$' Brewfile.heavy
+
+  grep -q '^cask "visual-studio-code"$' Brewfile.vscode
+  grep -q '^vscode "ms-python.python"$' Brewfile.vscode
+  vscode_count=$(grep -c '^vscode ' Brewfile.vscode)
+  [ "$vscode_count" -eq 91 ]
 }
 
 @test "Neovim lazy lockfile is tracked as repo state" {
@@ -105,11 +136,9 @@
   ! grep -Eq 'uses: .+@(v[0-9]+|main|master|latest)' .github/workflows/full-bootstrap.yml
 }
 
-@test "Homebrew snapshot and hardening backlog are documented" {
+@test "Homebrew snapshot is documented" {
   git check-ignore -q Brewfile.snapshot
   grep -q 'Brewfile.snapshot' README.md
-  [ -f "SECURITY_HARDENING.md" ]
-  grep -q 'Remaining supply-chain surfaces' SECURITY_HARDENING.md
 }
 
 @test "full bootstrap workflow keeps manual, nightly, and both-OS release coverage" {
@@ -262,12 +291,32 @@
   grep -Eq '^brew "tree-sitter-cli"$|^brew "tree-sitter-cli",' Brewfile
 }
 
-@test "installer uses single macOS Brewfile" {
+@test "install and CI execution paths use only core Homebrew profile" {
+  local execution_paths=(
+    "install.sh"
+    "scripts"
+    ".github/workflows"
+  )
+  local optional_profile
+  local optional_profiles=(
+    "Brewfile.personal-macos"
+    "Brewfile.terminal-gui"
+    "Brewfile.vscode"
+    "Brewfile.heavy"
+  )
+
   grep -q 'brew bundle --file="$dir/Brewfile"' install.sh
   ! grep -q 'add_brew_profile()' install.sh
-  ! grep -q 'Brewfile.gui' install.sh
-  ! grep -q 'Brewfile.vscode' install.sh
-  ! grep -q 'Brewfile.extras' install.sh
+
+  for optional_profile in "${optional_profiles[@]}"; do
+    run grep -R --line-number --fixed-strings "$optional_profile" "${execution_paths[@]}"
+    [ "$status" -eq 1 ]
+    [ -z "$output" ]
+  done
+
+  run grep -R --line-number -E 'brew[[:space:]]+trust' "${execution_paths[@]}"
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
 }
 
 @test "installer pins and verifies remote bootstrap artifacts" {
@@ -298,6 +347,12 @@
 @test "fff.nvim builds only its Neovim crate without the native downloader" {
   grep -Fq 'build = "cargo build --release -p fff-nvim"' nvim/lua/plugins/fff.lua
   ! grep -Fq 'download_or_build_binary' nvim/lua/plugins/fff.lua
+}
+
+@test "markdown preview build uses a JavaScript lockfile" {
+  grep -Fq 'yarn install --frozen-lockfile' nvim/lua/plugins/markdown-preview.lua
+  grep -Fq 'npm ci' nvim/lua/plugins/markdown-preview.lua
+  ! grep -Fq 'npm install --no-package-lock' nvim/lua/plugins/markdown-preview.lua
 }
 
 @test "dotfiles_version_ge compares semantic versions portably" {

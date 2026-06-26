@@ -1,0 +1,3 @@
+brew "grafana"
+brew "postgresql@18", link: true
+cask "basictex"

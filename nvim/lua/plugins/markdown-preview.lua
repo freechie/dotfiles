@@ -9,7 +9,7 @@ return {
         ft = { "markdown" },
 
         -- This command runs the first time you install the plugin.
-        build = "cd app && npm install --no-package-lock && git -C .. checkout -- app/yarn.lock && rm -f package-lock.json",
+        build = [[cd app && if [ -f yarn.lock ]; then if command -v yarn >/dev/null 2>&1; then yarn install --frozen-lockfile; else echo "markdown-preview.nvim: yarn is required for frozen lockfile install" >&2; exit 1; fi; elif [ -f package-lock.json ]; then npm ci; else echo "markdown-preview.nvim: no supported JS lockfile found" >&2; exit 1; fi]],
 
         -- This is the crucial part: define the keymaps here.
         keys = {

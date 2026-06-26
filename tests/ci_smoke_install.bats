@@ -170,7 +170,7 @@ EOF
 
   run sed -n '1p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]
-  [ "$output" = "basictex" ]
+  [ "$output" = "" ]
 
   run sed -n '2p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]

@@ -321,7 +321,6 @@ MOCK
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"
-    "claude/CLAUDE.md"
   )
 
   for f in "${expected[@]}"; do
