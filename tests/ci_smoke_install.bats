@@ -114,10 +114,22 @@ EOF
 
   run env HOME="$HOME" PATH="$bin_dir:$PATH" bash "$repo/scripts/ci-smoke-install.sh" linux
   [ "$status" -eq 0 ]
+  [[ "$output" == *"CI timing: starting full install..."* ]]
+  [[ "$output" == *"CI timing: full install completed in "* ]]
+  [[ "$output" == *"CI timing: starting skip-deps idempotence install..."* ]]
+  [[ "$output" == *"CI timing: skip-deps idempotence install completed in "* ]]
+  [[ "$output" == *"CI timing: starting startup smoke..."* ]]
+  [[ "$output" == *"CI timing: startup smoke completed in "* ]]
+  [[ "$output" == *"CI timing: starting clean worktree check..."* ]]
+  [[ "$output" == *"CI timing: clean worktree check completed in "* ]]
 
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
   [ "$output" = $'<none>\n--skip-deps' ]
+
+  run cat "$repo/install-env.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=\nDOTFILES_CI_SMOKE_INSTALL=1' ]
 
   [ "$(readlink "$HOME/.zshrc")" = "$repo/platforms/ubuntu/.zshrc" ]
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/ubuntu/.bash_profile" ]
@@ -141,6 +153,10 @@ EOF
 
   run env HOME="$HOME" PATH="$bin_dir:$PATH" bash "$repo/scripts/ci-smoke-install.sh" linux skip-deps
   [ "$status" -eq 0 ]
+  [[ "$output" == *"CI timing: starting skip-deps install 1..."* ]]
+  [[ "$output" == *"CI timing: skip-deps install 1 completed in "* ]]
+  [[ "$output" == *"CI timing: starting skip-deps install 2..."* ]]
+  [[ "$output" == *"CI timing: skip-deps install 2 completed in "* ]]
 
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
@@ -159,6 +175,10 @@ EOF
 
   run env HOME="$HOME" PATH="$bin_dir:$PATH" bash "$repo/scripts/ci-smoke-install.sh" macos skip-deps
   [ "$status" -eq 0 ]
+  [[ "$output" == *"CI timing: starting skip-deps install 1..."* ]]
+  [[ "$output" == *"CI timing: skip-deps install 1 completed in "* ]]
+  [[ "$output" == *"CI timing: starting skip-deps install 2..."* ]]
+  [[ "$output" == *"CI timing: skip-deps install 2 completed in "* ]]
 
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
@@ -181,10 +201,22 @@ EOF
 
   run env HOME="$HOME" PATH="$bin_dir:$PATH" bash "$repo/scripts/ci-smoke-install.sh" macos full
   [ "$status" -eq 0 ]
+  [[ "$output" == *"CI timing: starting full install..."* ]]
+  [[ "$output" == *"CI timing: full install completed in "* ]]
+  [[ "$output" == *"CI timing: starting skip-deps idempotence install..."* ]]
+  [[ "$output" == *"CI timing: skip-deps idempotence install completed in "* ]]
+  [[ "$output" == *"CI timing: starting startup smoke..."* ]]
+  [[ "$output" == *"CI timing: startup smoke completed in "* ]]
+  [[ "$output" == *"CI timing: starting clean worktree check..."* ]]
+  [[ "$output" == *"CI timing: clean worktree check completed in "* ]]
 
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
   [ "$output" = $'<none>\n--skip-deps' ]
+
+  run cat "$repo/install-env.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
 
   run sed -n '1p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]
@@ -248,6 +280,10 @@ EOF
   run cat "$repo/install.log"
   [ "$status" -eq 0 ]
   [ "$output" = $'<none>\n--skip-deps' ]
+
+  run cat "$repo/install-env.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {

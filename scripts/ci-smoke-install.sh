@@ -31,6 +31,30 @@ assert_clean_worktree() {
     test -z "$(git status --short)"
 }
 
+run_timed() {
+    local label="$1"
+    local start end elapsed status
+    shift
+
+    printf 'CI timing: starting %s...\n' "$label"
+    start="$(date +%s)"
+    if "$@"; then
+        status=0
+    else
+        status=$?
+    fi
+    end="$(date +%s)"
+    elapsed=$((end - start))
+
+    if [[ "$status" -eq 0 ]]; then
+        printf 'CI timing: %s completed in %ss\n' "$label" "$elapsed"
+    else
+        printf 'CI timing: %s failed after %ss\n' "$label" "$elapsed" >&2
+    fi
+
+    return "$status"
+}
+
 smoke_shell_startup() {
     zsh -ic 'alias ls >/dev/null; command -v nvim >/dev/null'
     bash -lc 'command -v nvim >/dev/null'
@@ -47,13 +71,24 @@ smoke_nvim_startup() {
     DOTFILES_CI_SMOKE_NVIM=1 nvim --headless '+quitall'
 }
 
+smoke_startup() {
+    nvim --version | head -n 1
+    smoke_shell_startup
+    smoke_tmux_startup
+    smoke_nvim_startup
+}
+
+smoke_install_linux_full() {
+    printf 'y\n' | ./install.sh
+}
+
 smoke_install_skip_deps() {
     printf 'y\n' | DOTFILES_CI_SMOKE_INSTALL=1 ./install.sh --skip-deps
 }
 
 smoke_install_macos_full() {
     prepare_macos_homebrew_ci
-    printf 'y\n' | ./install.sh
+    printf 'y\n' | DOTFILES_CI_SMOKE_INSTALL=1 ./install.sh
 }
 
 prepare_macos_homebrew_ci() {
@@ -107,12 +142,12 @@ case "$platform" in
     linux)
         case "$mode" in
             full)
-                printf 'y\n' | ./install.sh
-                printf 'y\n' | ./install.sh --skip-deps
+                run_timed "full install" smoke_install_linux_full
+                run_timed "skip-deps idempotence install" smoke_install_skip_deps
                 ;;
             skip-deps)
-                smoke_install_skip_deps
-                smoke_install_skip_deps
+                run_timed "skip-deps install 1" smoke_install_skip_deps
+                run_timed "skip-deps install 2" smoke_install_skip_deps
                 ;;
             *)
                 echo "Unknown Linux install mode: $mode" >&2
@@ -129,21 +164,18 @@ case "$platform" in
         if [[ "$mode" == "full" ]]; then
             assert_full_linux_tools
         fi
-        nvim --version | head -n 1
-        smoke_shell_startup
-        smoke_tmux_startup
-        smoke_nvim_startup
-        assert_clean_worktree
+        run_timed "startup smoke" smoke_startup
+        run_timed "clean worktree check" assert_clean_worktree
         ;;
     macos)
         case "$mode" in
             full)
-                smoke_install_macos_full
-                printf 'y\n' | ./install.sh --skip-deps
+                run_timed "full install" smoke_install_macos_full
+                run_timed "skip-deps idempotence install" smoke_install_skip_deps
                 ;;
             skip-deps)
-                smoke_install_skip_deps
-                smoke_install_skip_deps
+                run_timed "skip-deps install 1" smoke_install_skip_deps
+                run_timed "skip-deps install 2" smoke_install_skip_deps
                 ;;
             *)
                 echo "Unknown macOS install mode: $mode" >&2
@@ -158,11 +190,8 @@ case "$platform" in
         assert_core_tools
         command -v brew
         command -v lua
-        nvim --version | head -n 1
-        smoke_shell_startup
-        smoke_tmux_startup
-        smoke_nvim_startup
-        assert_clean_worktree
+        run_timed "startup smoke" smoke_startup
+        run_timed "clean worktree check" assert_clean_worktree
         ;;
     *)
         echo "Unknown platform argument: $platform" >&2
