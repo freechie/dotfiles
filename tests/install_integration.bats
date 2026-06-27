@@ -253,9 +253,63 @@ EOF
 
 @test "install.sh runs brew bundle" {
   run env DOTFILES_PLATFORM=macos bash -c 'echo "y" | ./install.sh'
-  [[ "$output" == *"Mock brew bundle --file="* ]]
+  [[ "$output" == *"Mock brew bundle install --file="* ]]
   [[ "$output" == *"/Brewfile"* ]]
+  [[ "$output" == *"--no-upgrade --jobs=1"* ]]
   [[ "$output" == *"Installing macOS dependencies from Brewfile"* ]]
+}
+
+@test "install.sh retries brew bundle on Homebrew Cellar lock" {
+  cat << EOF > "$TEST_HOME/bin/brew"
+#!/bin/bash
+echo "Mock brew \$@" >> "$TEST_HOME/brew.log"
+if [ "\${1:-}" = "bundle" ]; then
+  count=0
+  if [ -f "$TEST_HOME/brew-attempts" ]; then
+    count=\$(cat "$TEST_HOME/brew-attempts")
+  fi
+  count=\$((count + 1))
+  echo "\$count" > "$TEST_HOME/brew-attempts"
+  if [ "\$count" -eq 1 ]; then
+    echo "A \`brew install --formula luajit\` process has already locked /opt/homebrew/Cellar/luajit." >&2
+    exit 1
+  fi
+fi
+echo "Mock brew \$@"
+exit 0
+EOF
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env DOTFILES_PLATFORM=macos DOTFILES_BREW_BUNDLE_RETRY_DELAY_SECONDS=0 bash -c 'echo "y" | ./install.sh'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Homebrew Cellar lock detected; retrying brew bundle install (1/3) in 0 seconds..."* ]]
+
+  run grep -c '^Mock brew bundle install --file=' "$TEST_HOME/brew.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = "2" ]
+}
+
+@test "install.sh does not retry non-lock brew bundle failures" {
+  cat << EOF > "$TEST_HOME/bin/brew"
+#!/bin/bash
+echo "Mock brew \$@" >> "$TEST_HOME/brew.log"
+if [ "\${1:-}" = "bundle" ]; then
+  echo "Formula unavailable" >&2
+  exit 42
+fi
+echo "Mock brew \$@"
+exit 0
+EOF
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env DOTFILES_PLATFORM=macos DOTFILES_BREW_BUNDLE_RETRY_DELAY_SECONDS=0 bash -c 'echo "y" | ./install.sh'
+  [ "$status" -eq 42 ]
+  [[ "$output" == *"Formula unavailable"* ]]
+  [[ "$output" != *"Homebrew Cellar lock detected"* ]]
+
+  run grep -c '^Mock brew bundle install --file=' "$TEST_HOME/brew.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = "1" ]
 }
 
 @test "install.sh uses Linux Ghostty path when platform is Linux" {
@@ -287,7 +341,7 @@ EOF
   [[ "$output" == *"Mock gem install --user-install neovim"* ]]
   [[ "$output" == *"Installing starship 1.25.1..."* || "$output" == *"starship is already installed."* ]]
   [[ "$output" == *"Skipping Neovim bootstrap: non-interactive session."* ]]
-  [[ "$output" != *"Mock brew bundle --file="* ]]
+  [[ "$output" != *"Mock brew bundle install --file="* ]]
 
   local dir="$(pwd)"
   [ -L "$HOME/.config/ghostty/config" ]

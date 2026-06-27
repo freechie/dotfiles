@@ -151,7 +151,8 @@
   grep -Fq 'runs-on: ${{ matrix.os }}' .github/workflows/full-bootstrap.yml
   grep -q 'fail-fast: false' .github/workflows/full-bootstrap.yml
   grep -q 'ubuntu-latest' .github/workflows/full-bootstrap.yml
-  grep -q 'macos-latest' .github/workflows/full-bootstrap.yml
+  grep -q 'macos-15' .github/workflows/full-bootstrap.yml
+  grep -q 'macos-15' .github/workflows/test.yml
 }
 
 @test "bootstrap e2e covers both macOS and Linux install paths" {
@@ -305,7 +306,7 @@
     "Brewfile.heavy"
   )
 
-  grep -q 'brew bundle --file="$dir/Brewfile"' install.sh
+  grep -q 'run_brew_bundle_install "$dir/Brewfile"' install.sh
   ! grep -q 'add_brew_profile()' install.sh
 
   for optional_profile in "${optional_profiles[@]}"; do

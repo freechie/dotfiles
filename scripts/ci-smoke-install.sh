@@ -52,7 +52,28 @@ smoke_install_skip_deps() {
 }
 
 smoke_install_macos_full() {
+    prepare_macos_homebrew_ci
     printf 'y\n' | ./install.sh
+}
+
+prepare_macos_homebrew_ci() {
+    local tap
+
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export HOMEBREW_NO_ENV_HINTS=1
+    export HOMEBREW_NO_INSTALL_CLEANUP=1
+    export HOMEBREW_NO_INSTALL_UPGRADE=1
+
+    if ! command -v brew >/dev/null 2>&1; then
+        return
+    fi
+
+    while IFS= read -r tap; do
+        case "$tap" in
+            ""|homebrew/*) ;;
+            *) brew untap "$tap" ;;
+        esac
+    done < <(brew tap 2>/dev/null || true)
 }
 
 assert_core_tools() {

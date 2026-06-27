@@ -27,6 +27,12 @@ set -euo pipefail
 echo "\${*:-<none>}" >> "$repo/install.log"
 echo "DOTFILES_CI_SMOKE_INSTALL=\${DOTFILES_CI_SMOKE_INSTALL:-}" >> "$repo/install-env.log"
 echo "\${HOMEBREW_BUNDLE_CASK_SKIP:-}" >> "$repo/brew-cask-skip.log"
+{
+  echo "HOMEBREW_NO_AUTO_UPDATE=\${HOMEBREW_NO_AUTO_UPDATE:-}"
+  echo "HOMEBREW_NO_ENV_HINTS=\${HOMEBREW_NO_ENV_HINTS:-}"
+  echo "HOMEBREW_NO_INSTALL_CLEANUP=\${HOMEBREW_NO_INSTALL_CLEANUP:-}"
+  echo "HOMEBREW_NO_INSTALL_UPGRADE=\${HOMEBREW_NO_INSTALL_UPGRADE:-}"
+} >> "$repo/homebrew-env.log"
 mkdir -p "$HOME/.config"
 ln -snf "$repo/platforms/$platform_dir/.zshrc" "$HOME/.zshrc"
 ln -snf "$repo/platforms/$platform_dir/.bash_profile" "$HOME/.bash_profile"
@@ -53,6 +59,18 @@ exit 0
 EOF
     chmod +x "$bin_dir/$cmd"
   done
+
+  cat > "$bin_dir/brew" <<EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$bin_dir/brew.log"
+if [ "\${1:-}" = "tap" ] && [ "\$#" -eq 1 ]; then
+  if [ -n "\${MOCK_BREW_TAPS:-}" ]; then
+    printf '%s\n' \${MOCK_BREW_TAPS}
+  fi
+fi
+exit 0
+EOF
+  chmod +x "$bin_dir/brew"
 
   cat > "$bin_dir/zsh" <<'EOF'
 #!/usr/bin/env bash
@@ -175,6 +193,31 @@ EOF
   run sed -n '2p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]
   [ "$output" = "" ]
+}
+
+@test "ci smoke install normalizes Homebrew state before macOS full bootstrap" {
+  local repo="$BATS_TEST_TMPDIR/repo-macos-homebrew"
+  local bin_dir="$BATS_TEST_TMPDIR/bin-macos-homebrew"
+  make_mock_bin "$bin_dir"
+  make_mock_repo "$repo" "macos" "$bin_dir"
+
+  run env HOME="$HOME" PATH="$bin_dir:$PATH" MOCK_BREW_TAPS="homebrew/core aws/tap custom/tools homebrew/cask" bash "$repo/scripts/ci-smoke-install.sh" macos full
+  [ "$status" -eq 0 ]
+
+  run cat "$bin_dir/brew.log"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"tap"* ]]
+  [[ "$output" == *"untap aws/tap"* ]]
+  [[ "$output" == *"untap custom/tools"* ]]
+  [[ "$output" != *"untap homebrew/core"* ]]
+  [[ "$output" != *"untap homebrew/cask"* ]]
+
+  run cat "$repo/homebrew-env.log"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"HOMEBREW_NO_AUTO_UPDATE=1"* ]]
+  [[ "$output" == *"HOMEBREW_NO_ENV_HINTS=1"* ]]
+  [[ "$output" == *"HOMEBREW_NO_INSTALL_CLEANUP=1"* ]]
+  [[ "$output" == *"HOMEBREW_NO_INSTALL_UPGRADE=1"* ]]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {
