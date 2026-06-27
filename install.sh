@@ -73,6 +73,49 @@ run_cmd() {
     fi
 }
 
+is_homebrew_cellar_lock_output() {
+    local output="$1"
+
+    [[ "$output" == *"has already locked"* && "$output" == *"/Cellar/"* ]]
+}
+
+run_brew_bundle_install() {
+    local brewfile="$1"
+    local max_attempts="${DOTFILES_BREW_BUNDLE_RETRIES:-3}"
+    local retry_delay="${DOTFILES_BREW_BUNDLE_RETRY_DELAY_SECONDS:-30}"
+    local attempt=1
+    local output status
+
+    if [[ -n "$DRY_RUN" ]]; then
+        run_cmd brew bundle install --file="$brewfile" --no-upgrade --jobs=1
+        return
+    fi
+
+    while true; do
+        if output="$(brew bundle install --file="$brewfile" --no-upgrade --jobs=1 2>&1)"; then
+            if [[ -n "$output" ]]; then
+                printf '%s\n' "$output"
+            fi
+            return 0
+        else
+            status=$?
+        fi
+
+        if [[ -n "$output" ]]; then
+            printf '%s\n' "$output"
+        fi
+
+        if (( attempt >= max_attempts )) || ! is_homebrew_cellar_lock_output "$output"; then
+            return "$status"
+        fi
+
+        printf 'Homebrew Cellar lock detected; retrying brew bundle install (%d/%d) in %s seconds...\n' \
+            "$attempt" "$max_attempts" "$retry_delay"
+        sleep "$retry_delay"
+        attempt=$((attempt + 1))
+    done
+}
+
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -720,7 +763,7 @@ install_dependencies() {
     fi
 
     echo "Installing macOS dependencies from Brewfile..."
-    run_cmd brew bundle --file="$dir/Brewfile"
+    run_brew_bundle_install "$dir/Brewfile"
 }
 
 ensure_default_shell_is_zsh() {
