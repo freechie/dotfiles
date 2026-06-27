@@ -57,8 +57,6 @@ smoke_install_macos_full() {
 }
 
 prepare_macos_homebrew_ci() {
-    local tap
-
     export HOMEBREW_NO_AUTO_UPDATE=1
     export HOMEBREW_NO_ENV_HINTS=1
     export HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -68,11 +66,22 @@ prepare_macos_homebrew_ci() {
         return
     fi
 
+    untap_homebrew_tap_if_present "aws/tap"
+}
+
+untap_homebrew_tap_if_present() {
+    local target="$1"
+    local tap
+
     while IFS= read -r tap; do
-        case "$tap" in
-            ""|homebrew/*) ;;
-            *) brew untap "$tap" ;;
-        esac
+        if [[ "$tap" != "$target" ]]; then
+            continue
+        fi
+
+        if ! brew untap "$target"; then
+            printf 'Skipping Homebrew tap cleanup for %s; brew refused to untap it.\n' "$target" >&2
+        fi
+        return
     done < <(brew tap 2>/dev/null || true)
 }
 

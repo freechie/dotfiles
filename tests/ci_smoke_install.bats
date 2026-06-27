@@ -195,20 +195,20 @@ EOF
   [ "$output" = "" ]
 }
 
-@test "ci smoke install normalizes Homebrew state before macOS full bootstrap" {
+@test "ci smoke install removes known untrusted Homebrew tap before macOS full bootstrap" {
   local repo="$BATS_TEST_TMPDIR/repo-macos-homebrew"
   local bin_dir="$BATS_TEST_TMPDIR/bin-macos-homebrew"
   make_mock_bin "$bin_dir"
   make_mock_repo "$repo" "macos" "$bin_dir"
 
-  run env HOME="$HOME" PATH="$bin_dir:$PATH" MOCK_BREW_TAPS="homebrew/core aws/tap custom/tools homebrew/cask" bash "$repo/scripts/ci-smoke-install.sh" macos full
+  run env HOME="$HOME" PATH="$bin_dir:$PATH" MOCK_BREW_TAPS="homebrew/core aws/tap azure/bicep homebrew/cask" bash "$repo/scripts/ci-smoke-install.sh" macos full
   [ "$status" -eq 0 ]
 
   run cat "$bin_dir/brew.log"
   [ "$status" -eq 0 ]
   [[ "$output" == *"tap"* ]]
   [[ "$output" == *"untap aws/tap"* ]]
-  [[ "$output" == *"untap custom/tools"* ]]
+  [[ "$output" != *"untap azure/bicep"* ]]
   [[ "$output" != *"untap homebrew/core"* ]]
   [[ "$output" != *"untap homebrew/cask"* ]]
 
@@ -218,6 +218,36 @@ EOF
   [[ "$output" == *"HOMEBREW_NO_ENV_HINTS=1"* ]]
   [[ "$output" == *"HOMEBREW_NO_INSTALL_CLEANUP=1"* ]]
   [[ "$output" == *"HOMEBREW_NO_INSTALL_UPGRADE=1"* ]]
+}
+
+@test "ci smoke install continues when known Homebrew tap cleanup is refused" {
+  local repo="$BATS_TEST_TMPDIR/repo-macos-homebrew-refused"
+  local bin_dir="$BATS_TEST_TMPDIR/bin-macos-homebrew-refused"
+  make_mock_bin "$bin_dir"
+  make_mock_repo "$repo" "macos" "$bin_dir"
+
+  cat > "$bin_dir/brew" <<EOF
+#!/usr/bin/env bash
+echo "\$*" >> "$bin_dir/brew.log"
+if [ "\${1:-}" = "tap" ] && [ "\$#" -eq 1 ]; then
+  printf '%s\n' aws/tap azure/bicep
+  exit 0
+fi
+if [ "\${1:-}" = "untap" ]; then
+  echo "Error: Refusing to untap \$2 because it contains installed formulae" >&2
+  exit 1
+fi
+exit 0
+EOF
+  chmod +x "$bin_dir/brew"
+
+  run env HOME="$HOME" PATH="$bin_dir:$PATH" bash "$repo/scripts/ci-smoke-install.sh" macos full
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping Homebrew tap cleanup for aws/tap; brew refused to untap it."* ]]
+
+  run cat "$repo/install.log"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'<none>\n--skip-deps' ]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {
