@@ -160,6 +160,24 @@ MOCK
   [[ "$output" != *"Mock gem install"* ]]
 }
 
+@test "install.sh can force Neovim bootstrap in non-interactive CI" {
+  cat > "$TEST_HOME/bin/nvim" <<'MOCK'
+#!/bin/bash
+echo "Mock nvim $@"
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/nvim"
+
+  run env DOTFILES_PLATFORM=macos DOTFILES_FORCE_NVIM_BOOTSTRAP=1 bash -c 'printf "y\n" | ./install.sh --skip-deps'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Forcing Neovim bootstrap in non-interactive session."* ]]
+  [[ "$output" == *"Bootstrapping Neovim plugins..."* ]]
+  [[ "$output" == *"Mock nvim --headless +Lazy! restore"* ]]
+  [[ "$output" == *"Bootstrapping Mason tooling..."* ]]
+  [[ "$output" == *"Bootstrapping treesitter parsers..."* ]]
+  [[ "$output" == *"Bootstrapping DevDocs offline docs..."* ]]
+}
+
 @test "install.sh fails before running a mismatched downloaded installer" {
   rm -f "$TEST_HOME/bin/"*
   setup_macos_minimal_path

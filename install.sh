@@ -162,6 +162,10 @@ is_ci_smoke_install() {
     [[ "${DOTFILES_CI_SMOKE_INSTALL:-}" == "1" ]]
 }
 
+should_force_nvim_bootstrap() {
+    [[ "${DOTFILES_FORCE_NVIM_BOOTSTRAP:-}" == "1" ]]
+}
+
 confirm_proceed() {
     local step=1
 
@@ -637,7 +641,7 @@ install_oh_my_zsh() {
     fi
 
     echo "Installing Oh My Zsh..."
-    run_cmd git clone https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"
+    run_cmd git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"
 }
 
 install_omz_plugin() {
@@ -651,7 +655,7 @@ install_omz_plugin() {
     fi
 
     echo "Installing Oh My Zsh plugin '$plugin_name'..."
-    run_cmd git clone "$repo_url" "$plugin_dir"
+    run_cmd git clone --depth=1 "$repo_url" "$plugin_dir"
 }
 
 install_zsh_extras() {
@@ -818,7 +822,7 @@ install_tpm() {
     fi
 
     echo "Installing Tmux Plugin Manager (TPM)..."
-    run_cmd git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
+    run_cmd git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"
 }
 
 add_link_spec() {
@@ -945,9 +949,13 @@ bootstrap_neovim_environment() {
         return
     fi
 
-    if ! [[ -t 0 ]]; then
+    if ! [[ -t 0 ]] && ! should_force_nvim_bootstrap; then
         echo "Skipping Neovim bootstrap: non-interactive session."
         return
+    fi
+
+    if ! [[ -t 0 ]]; then
+        echo "Forcing Neovim bootstrap in non-interactive session."
     fi
 
     echo "Bootstrapping Neovim plugins..."
@@ -980,6 +988,7 @@ main() {
     prepare_backup_dir
     ensure_homebrew
     install_dependencies
+    export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
     echo "Checking for required dependencies..."
     check_and_install_lldb
     build_link_specs

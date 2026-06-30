@@ -116,24 +116,53 @@
   [ -f ".github/workflows/test.yml" ]
   [ -f ".github/workflows/full-bootstrap.yml" ]
   [ -f "scripts/ci-smoke-install.sh" ]
+  grep -q "DOTFILES_TEST_SKIP_SYNTAX=1 ./test.sh" .github/workflows/test.yml
   grep -q "bash ./scripts/ci-smoke-install.sh linux skip-deps" .github/workflows/test.yml
   grep -q "bash ./scripts/ci-smoke-install.sh macos skip-deps" .github/workflows/test.yml
   grep -q "bash ./scripts/ci-smoke-install.sh linux" .github/workflows/full-bootstrap.yml
   grep -q "bash ./scripts/ci-smoke-install.sh macos full" .github/workflows/full-bootstrap.yml
 }
 
-@test "CI workflows use read-only permissions and secret scanning" {
+@test "CI workflows use read-only permissions, pinned actions, and secret scanning" {
   grep -q '^permissions:' .github/workflows/test.yml
   grep -q '^  contents: read' .github/workflows/test.yml
   grep -q 'actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd' .github/workflows/test.yml
+  grep -q 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' .github/workflows/test.yml
   grep -q 'gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7' .github/workflows/test.yml
   grep -q 'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true' .github/workflows/test.yml
+  grep -q 'fetch-depth: 0' .github/workflows/test.yml
   ! grep -Eq 'uses: .+@(v[0-9]+|main|master|latest)' .github/workflows/test.yml
 
   grep -q '^permissions:' .github/workflows/full-bootstrap.yml
   grep -q '^  contents: read' .github/workflows/full-bootstrap.yml
   grep -q 'actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd' .github/workflows/full-bootstrap.yml
+  grep -q 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' .github/workflows/full-bootstrap.yml
   ! grep -Eq 'uses: .+@(v[0-9]+|main|master|latest)' .github/workflows/full-bootstrap.yml
+}
+
+@test "CI workflows split lint gates and set strict timeouts" {
+  grep -q '^  lint:' .github/workflows/test.yml
+  grep -q 'STYLUA_VERSION: 2.5.2' .github/workflows/test.yml
+  grep -q 'cargo install stylua --locked --version "$STYLUA_VERSION"' .github/workflows/test.yml
+  grep -q 'bats tests/syntax.bats' .github/workflows/test.yml
+  grep -q 'stylua --check nvim' .github/workflows/test.yml
+  grep -q 'timeout-minutes: 10' .github/workflows/test.yml
+  grep -q 'timeout-minutes: 30' .github/workflows/full-bootstrap.yml
+}
+
+@test "CI workflows use targeted caches and Homebrew no-update env" {
+  grep -q 'HOMEBREW_NO_AUTO_UPDATE: 1' .github/workflows/test.yml
+  grep -q 'HOMEBREW_NO_INSTALL_CLEANUP: 1' .github/workflows/test.yml
+  grep -q 'HOMEBREW_NO_ENV_HINTS: 1' .github/workflows/test.yml
+  grep -q 'HOMEBREW_NO_AUTO_UPDATE: 1' .github/workflows/full-bootstrap.yml
+  grep -q 'HOMEBREW_NO_INSTALL_CLEANUP: 1' .github/workflows/full-bootstrap.yml
+  grep -q 'HOMEBREW_NO_ENV_HINTS: 1' .github/workflows/full-bootstrap.yml
+  grep -q '~/.local/share/nvim' .github/workflows/full-bootstrap.yml
+  grep -q '~/.npm' .github/workflows/full-bootstrap.yml
+  grep -q '~/.cargo/registry/cache' .github/workflows/full-bootstrap.yml
+  grep -q '~/Library/Caches/Homebrew' .github/workflows/full-bootstrap.yml
+  ! grep -q '/opt/homebrew' .github/workflows/full-bootstrap.yml
+  ! grep -q '/usr/local/Homebrew' .github/workflows/full-bootstrap.yml
 }
 
 @test "Homebrew snapshot is documented" {
@@ -338,10 +367,25 @@
   ! grep -q 'releases/latest/download' install.sh
 }
 
+@test "installer shallow-clones managed git plugin repositories" {
+  grep -Fq 'git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"' install.sh
+  grep -Fq 'git clone --depth=1 "$repo_url" "$plugin_dir"' install.sh
+  grep -Fq 'git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"' install.sh
+  grep -Fq '"--depth=1",' nvim/lua/core/lazy.lua
+}
+
+@test "StyLua configuration is tracked for CI formatting gate" {
+  [ -f ".stylua.toml" ]
+  grep -q '^indent_type = "Tabs"$' .stylua.toml
+  grep -q '^column_width = 120$' .stylua.toml
+}
+
 @test "Neovim bootstrap restores locked plugins without updating them" {
+  grep -Fq 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"' install.sh
   grep -Fq 'run_deferred_error_step "Neovim plugin restore" nvim --headless' install.sh
   grep -Fq '"+Lazy! restore"' install.sh
   grep -Fq "plugin.has_errors(spec) then vim.cmd('cquit 1')" install.sh
+  grep -Fq 'DOTFILES_FORCE_NVIM_BOOTSTRAP' install.sh
   ! grep -Fq 'nvim --headless "+Lazy! sync" +qa' install.sh
 }
 

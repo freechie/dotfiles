@@ -15,4 +15,17 @@ if ! command -v bats &> /dev/null; then
     exit 1
 fi
 
-bats tests/
+tests=(tests/*.bats)
+
+if [[ "${DOTFILES_TEST_SKIP_SYNTAX:-}" == "1" ]]; then
+    filtered_tests=()
+    for test_file in "${tests[@]}"; do
+        if [[ "$(basename "$test_file")" == "syntax.bats" ]]; then
+            continue
+        fi
+        filtered_tests+=("$test_file")
+    done
+    tests=("${filtered_tests[@]}")
+fi
+
+bats "${tests[@]}"

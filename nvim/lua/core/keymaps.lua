@@ -1,10 +1,10 @@
 -- A helper function for creating keymaps for better readability
 local function map(mode, lhs, rhs, opts)
-    local options = { noremap = true, silent = true }
-    if opts then
-        options = vim.tbl_extend("force", options, opts)
-    end
-    vim.keymap.set(mode, lhs, rhs, options)
+	local options = { noremap = true, silent = true }
+	if opts then
+		options = vim.tbl_extend("force", options, opts)
+	end
+	vim.keymap.set(mode, lhs, rhs, options)
 end
 
 -- Basic Editor Mappings
@@ -12,11 +12,11 @@ map("n", "<leader>w", "<cmd>w<cr>", { desc = "Save File" })
 map("n", "<leader>q", "<cmd>q<cr>", { desc = "Quit Window" })
 map("n", "<leader>Q", "<cmd>qa!<cr>", { desc = "Force Quit All" })
 if vim.fn.exists(":restart") == 2 then
-    map("n", "<leader>R", function()
-        local session = vim.fn.stdpath("state") .. "/restart_session.vim"
-        vim.cmd("mksession! " .. vim.fn.fnameescape(session))
-        vim.cmd("restart source " .. vim.fn.fnameescape(session))
-    end, { desc = "Restart Neovim" })
+	map("n", "<leader>R", function()
+		local session = vim.fn.stdpath("state") .. "/restart_session.vim"
+		vim.cmd("mksession! " .. vim.fn.fnameescape(session))
+		vim.cmd("restart source " .. vim.fn.fnameescape(session))
+	end, { desc = "Restart Neovim" })
 end
 
 -- Clear search highlight
@@ -30,12 +30,14 @@ map("n", "<leader>fo", "<cmd>Telescope oldfiles<cr>", { desc = "[F]ind [O]ld Fil
 map("n", "<leader>fd", "<cmd>Telescope diagnostics<cr>", { desc = "[F]ind [D]iagnostics" })
 
 -- Formatting
-map("n", "<leader>cf", function() require("conform").format({ async = true, lsp_format = "fallback" }) end, { desc = "[C]ode [F]ormat" })
+map("n", "<leader>cf", function()
+	require("conform").format({ async = true, lsp_format = "fallback" })
+end, { desc = "[C]ode [F]ormat" })
 
 -- Diagnostic Keymaps
-map('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
-map('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
-map('n', '<leader>dd', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
+map("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic message" })
+map("n", "]d", vim.diagnostic.goto_next, { desc = "Go to next diagnostic message" })
+map("n", "<leader>dd", vim.diagnostic.open_float, { desc = "Open floating diagnostic message" })
 
 -- Quickfix Navigation
 map("n", "]q", "<cmd>cnext<cr>", { desc = "Next Quickfix Item" })
