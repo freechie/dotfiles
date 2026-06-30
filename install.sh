@@ -934,6 +934,17 @@ install_pynvim_provider() {
     run_cmd "$debugpy_pip" install --upgrade pynvim
 }
 
+run_nvim_bootstrap_step() {
+    local label="$1"
+    shift
+
+    if should_force_nvim_bootstrap; then
+        run_deferred_error_step "$label" env DOTFILES_CI_LOCK_READONLY=1 nvim --headless "$@"
+    else
+        run_deferred_error_step "$label" nvim --headless "$@"
+    fi
+}
+
 bootstrap_neovim_environment() {
     local treesitter_languages lua_list devdocs_entries devdocs_args
     treesitter_languages=("${DOTFILES_NVIM_TREESITTER_LANGUAGES[@]}")
@@ -959,25 +970,25 @@ bootstrap_neovim_environment() {
     fi
 
     echo "Bootstrapping Neovim plugins..."
-    run_deferred_error_step "Neovim plugin restore" nvim --headless \
+    run_nvim_bootstrap_step "Neovim plugin restore" \
         "+Lazy! restore" \
         "+lua local config = require('lazy.core.config'); local plugin = require('lazy.core.plugin'); for _, spec in pairs(config.spec.plugins) do if plugin.has_errors(spec) then vim.cmd('cquit 1') end end" \
         +qa
 
     echo "Bootstrapping Mason tooling..."
-    run_deferred_error_step "Mason tooling bootstrap" nvim --headless "+MasonUpdate" "+MasonToolsInstallSync" +qa
+    run_nvim_bootstrap_step "Mason tooling bootstrap" "+MasonUpdate" "+MasonToolsInstallSync" +qa
 
     lua_list="$(printf '"%s",' "${treesitter_languages[@]}")"
     lua_list="${lua_list%,}"
 
     echo "Bootstrapping treesitter parsers..."
-    run_deferred_error_step "Treesitter parser bootstrap" nvim --headless "+lua require('nvim-treesitter').install({${lua_list}}):wait(300000)" "+TSUpdateSync" +qa
+    run_nvim_bootstrap_step "Treesitter parser bootstrap" "+lua require('nvim-treesitter').install({${lua_list}}):wait(300000)" "+TSUpdateSync" +qa
 
     devdocs_args="$(printf '%s ' "${devdocs_entries[@]}")"
     devdocs_args="${devdocs_args% }"
 
     echo "Bootstrapping DevDocs offline docs..."
-    run_deferred_error_step "DevDocs bootstrap" nvim --headless "+DevdocsFetch" "+DevdocsInstall ${devdocs_args}" +qa
+    run_nvim_bootstrap_step "DevDocs bootstrap" "+DevdocsFetch" "+DevdocsInstall ${devdocs_args}" +qa
 }
 
 main() {

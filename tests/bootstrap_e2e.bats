@@ -143,7 +143,7 @@ install_for_platform() {
 
 prepare_lazy_stub() {
   export XDG_DATA_HOME="$BATS_TEST_TMPDIR/xdg-data"
-  mkdir -p "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua/lazy"
+  mkdir -p "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua/lazy/manage"
 
   cat << 'EOF' > "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua/lazy/init.lua"
 local M = {}
@@ -151,6 +151,7 @@ local M = {}
 function M.setup(_, opts)
   local log_path = vim.env.LAZY_STUB_LOG
   if log_path and log_path ~= "" then
+    require("lazy.manage.lock").update()
     local install_missing = opts and opts.install and opts.install.missing
     local checker_enabled = opts and opts.checker and opts.checker.enabled
     local file = assert(io.open(log_path, "a"))
@@ -159,6 +160,21 @@ function M.setup(_, opts)
     file:close()
   end
   return nil
+end
+
+return M
+EOF
+
+  cat << 'EOF' > "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua/lazy/manage/lock.lua"
+local M = {}
+
+function M.update()
+  local log_path = vim.env.LAZY_STUB_LOG
+  if log_path and log_path ~= "" then
+    local file = assert(io.open(log_path, "a"))
+    file:write("lock_update=true\n")
+    file:close()
+  end
 end
 
 return M
@@ -303,4 +319,26 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"install_missing=false"* ]]
   [[ "$output" == *"checker_enabled=false"* ]]
+  [[ "$output" != *"lock_update=true"* ]]
+}
+
+@test "installed neovim CI lock-readonly keeps installs enabled without lock updates" {
+  if ! command -v nvim >/dev/null 2>&1; then
+    skip "nvim is not installed"
+  fi
+
+  run install_for_platform macos Darwin
+  [ "$status" -eq 0 ]
+
+  prepare_lazy_stub
+  local lazy_stub_log="$BATS_TEST_TMPDIR/lazy-lock-readonly-stub.log"
+
+  run env HOME="$HOME" DOTFILES_TEST_UNAME=Darwin DOTFILES_CI_LOCK_READONLY=1 LAZY_STUB_LOG="$lazy_stub_log" XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$XDG_DATA_HOME" nvim --headless '+quitall'
+  [ "$status" -eq 0 ]
+
+  run cat "$lazy_stub_log"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"install_missing=true"* ]]
+  [[ "$output" == *"checker_enabled=true"* ]]
+  [[ "$output" != *"lock_update=true"* ]]
 }

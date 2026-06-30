@@ -163,6 +163,7 @@ MOCK
 @test "install.sh can force Neovim bootstrap in non-interactive CI" {
   cat > "$TEST_HOME/bin/nvim" <<'MOCK'
 #!/bin/bash
+echo "DOTFILES_CI_LOCK_READONLY=${DOTFILES_CI_LOCK_READONLY:-}"
 echo "Mock nvim $@"
 exit 0
 MOCK
@@ -172,6 +173,7 @@ MOCK
   [ "$status" -eq 0 ]
   [[ "$output" == *"Forcing Neovim bootstrap in non-interactive session."* ]]
   [[ "$output" == *"Bootstrapping Neovim plugins..."* ]]
+  [[ "$output" == *"DOTFILES_CI_LOCK_READONLY=1"* ]]
   [[ "$output" == *"Mock nvim --headless +Lazy! restore"* ]]
   [[ "$output" == *"Bootstrapping Mason tooling..."* ]]
   [[ "$output" == *"Bootstrapping treesitter parsers..."* ]]
