@@ -79,7 +79,7 @@ smoke_startup() {
 }
 
 smoke_install_linux_full() {
-    printf 'y\n' | ./install.sh
+    printf 'y\n' | DOTFILES_FORCE_NVIM_BOOTSTRAP=1 ./install.sh
 }
 
 smoke_install_skip_deps() {
@@ -88,7 +88,7 @@ smoke_install_skip_deps() {
 
 smoke_install_macos_full() {
     prepare_macos_homebrew_ci
-    printf 'y\n' | DOTFILES_CI_SMOKE_INSTALL=1 ./install.sh
+    printf 'y\n' | DOTFILES_CI_SMOKE_INSTALL=1 DOTFILES_FORCE_NVIM_BOOTSTRAP=1 ./install.sh
 }
 
 prepare_macos_homebrew_ci() {

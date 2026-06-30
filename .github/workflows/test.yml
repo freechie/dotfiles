@@ -11,6 +11,7 @@ jobs:
   gitleaks:
     name: gitleaks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
@@ -24,9 +25,51 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      STYLUA_VERSION: 2.5.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Cache StyLua cargo artifacts
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/bin/stylua
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: stylua-${{ runner.os }}-${{ env.STYLUA_VERSION }}
+
+      - name: Install lint dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck zsh tmux neovim lua5.4
+          sudo ln -sf /usr/bin/luac5.4 /usr/local/bin/luac
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          if ! stylua --version 2>/dev/null | grep -q "$STYLUA_VERSION"; then
+            cargo install stylua --locked --version "$STYLUA_VERSION"
+          fi
+
+      - name: Run syntax and static checks
+        run: bats tests/syntax.bats
+
+      - name: Check Lua formatting
+        run: stylua --check nvim
+
   test:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_ENV_HINTS: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +81,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
+      - name: Cache Homebrew downloads (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/Library/Caches/Homebrew
+          key: homebrew-test-${{ runner.os }}-${{ hashFiles('Brewfile') }}
+          restore-keys: |
+            homebrew-test-${{ runner.os }}-
+
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
@@ -47,14 +99,10 @@ jobs:
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          HOMEBREW_NO_ENV_HINTS: 1
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: brew install bats-core shellcheck tmux neovim lua
 
       - name: Run test suite
-        run: ./test.sh
+        run: DOTFILES_TEST_SKIP_SYNTAX=1 ./test.sh
 
       - name: Smoke install (Ubuntu)
         if: runner.os == 'Linux'

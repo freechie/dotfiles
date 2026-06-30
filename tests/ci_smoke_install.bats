@@ -26,6 +26,7 @@ make_mock_repo() {
 set -euo pipefail
 echo "\${*:-<none>}" >> "$repo/install.log"
 echo "DOTFILES_CI_SMOKE_INSTALL=\${DOTFILES_CI_SMOKE_INSTALL:-}" >> "$repo/install-env.log"
+echo "DOTFILES_FORCE_NVIM_BOOTSTRAP=\${DOTFILES_FORCE_NVIM_BOOTSTRAP:-}" >> "$repo/install-env.log"
 echo "\${HOMEBREW_BUNDLE_CASK_SKIP:-}" >> "$repo/brew-cask-skip.log"
 {
   echo "HOMEBREW_NO_AUTO_UPDATE=\${HOMEBREW_NO_AUTO_UPDATE:-}"
@@ -129,7 +130,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=\nDOTFILES_CI_SMOKE_INSTALL=1' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 
   [ "$(readlink "$HOME/.zshrc")" = "$repo/platforms/ubuntu/.zshrc" ]
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/ubuntu/.bash_profile" ]
@@ -164,7 +165,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 }
 
 @test "ci smoke install runs macOS skip-deps flow twice" {
@@ -186,7 +187,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 
   [ "$(readlink "$HOME/.zshrc")" = "$repo/platforms/macos/.zshrc" ]
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/macos/.bash_profile" ]
@@ -216,7 +217,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 
   run sed -n '1p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]
@@ -283,7 +284,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_CI_SMOKE_INSTALL=1' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {
