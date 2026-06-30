@@ -382,10 +382,12 @@
 
 @test "Neovim bootstrap restores locked plugins without updating them" {
   grep -Fq 'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"' install.sh
-  grep -Fq 'run_deferred_error_step "Neovim plugin restore" nvim --headless' install.sh
+  grep -Fq 'run_nvim_bootstrap_step "Neovim plugin restore"' install.sh
+  grep -Fq 'DOTFILES_CI_LOCK_READONLY=1 nvim --headless' install.sh
   grep -Fq '"+Lazy! restore"' install.sh
   grep -Fq "plugin.has_errors(spec) then vim.cmd('cquit 1')" install.sh
   grep -Fq 'DOTFILES_FORCE_NVIM_BOOTSTRAP' install.sh
+  grep -Fq 'DOTFILES_CI_LOCK_READONLY' nvim/lua/core/lazy.lua
   ! grep -Fq 'nvim --headless "+Lazy! sync" +qa' install.sh
 }
 

@@ -23,9 +23,10 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local ci_smoke_nvim = vim.env.DOTFILES_CI_SMOKE_NVIM == "1"
+local ci_lock_readonly = ci_smoke_nvim or vim.env.DOTFILES_CI_LOCK_READONLY == "1"
 
-if ci_smoke_nvim then
-	-- CI smoke validates startup without allowing Lazy to rewrite tracked pins.
+if ci_lock_readonly then
+	-- CI validates bootstrap/startup without allowing Lazy to rewrite tracked pins.
 	local ok, lock = pcall(require, "lazy.manage.lock")
 	if ok then
 		lock.update = function() end
