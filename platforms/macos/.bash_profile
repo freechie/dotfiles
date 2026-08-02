@@ -15,3 +15,22 @@ export DOTFILES_PLATFORM="macos"
 
 # shellcheck disable=SC1091
 . "$DOTFILES_ROOT/shell/bash/entrypoint.bash"
+. "$HOME/.cargo/env"
+
+# >>> juliaup initialize >>>
+
+# !! Contents within this block are managed by juliaup !!
+
+case ":$PATH:" in
+    *:/Users/what/.juliaup/bin:*)
+        ;;
+
+    *)
+        export PATH=/Users/what/.juliaup/bin${PATH:+:${PATH}}
+        ;;
+esac
+# Tab completion for juliaup and julia channel selection
+[ -f "/Users/what/.julia/juliaup/completions/bash.sh" ] && source "/Users/what/.julia/juliaup/completions/bash.sh"
+
+# <<< juliaup initialize <<<
+
