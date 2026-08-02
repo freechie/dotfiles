@@ -1,5 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos,visualstudiocode
 Brewfile.snapshot
+karabiner/automatic_backups/
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos,visualstudiocode
 
 ### macOS ###

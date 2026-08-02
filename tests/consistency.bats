@@ -34,6 +34,7 @@
     ".fzf.zsh"
     ".gitconfig"
     ".gitignore_global"
+    "karabiner/karabiner.json"
     "nvim"
     "starship.toml"
     "ghostty/config.macos"
@@ -73,6 +74,7 @@
   ! grep -q '^cask "font-fira-code-nerd-font"$' Brewfile
   ! grep -q '^cask "font-ubuntu-mono-nerd-font"$' Brewfile
   ! grep -q '^cask "font-ubuntu-sans-nerd-font"$' Brewfile
+  ! grep -q '^cask "karabiner-elements"$' Brewfile
   ! grep -q '^cask "unnaturalscrollwheels"$' Brewfile
   ! grep -q '^cask "visual-studio-code"$' Brewfile
   ! grep -q '^vscode ' Brewfile
@@ -84,6 +86,7 @@
 
   grep -q '^tap "cormacrelf/tap"$' Brewfile.personal-macos
   grep -q '^brew "cormacrelf/tap/dark-notify"$' Brewfile.personal-macos
+  grep -q '^cask "karabiner-elements"$' Brewfile.personal-macos
   grep -q '^cask "unnaturalscrollwheels"$' Brewfile.personal-macos
 
   grep -q '^cask "font-fira-code-nerd-font"$' Brewfile.terminal-gui
@@ -110,6 +113,19 @@
   run python3 -m json.tool nvim/lazy-lock.json
   [ "$status" -eq 0 ]
   ! git check-ignore -q nvim/lazy-lock.json
+}
+
+@test "Karabiner config is valid and tracks the fine brightness rule" {
+  [ -f "karabiner/karabiner.json" ]
+
+  if ! command -v python3 >/dev/null 2>&1; then
+    skip "python3 is not installed"
+  fi
+
+  run python3 -m json.tool karabiner/karabiner.json
+  [ "$status" -eq 0 ]
+  grep -q '"description": "Use fine brightness steps by default"' karabiner/karabiner.json
+  ! git check-ignore -q karabiner/karabiner.json
 }
 
 @test "CI workflow references cross-platform smoke install script" {

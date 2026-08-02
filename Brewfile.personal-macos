@@ -1,3 +1,4 @@
 tap "cormacrelf/tap"
 brew "cormacrelf/tap/dark-notify"
+cask "karabiner-elements"
 cask "unnaturalscrollwheels"
