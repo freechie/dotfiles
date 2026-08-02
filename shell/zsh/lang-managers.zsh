@@ -20,9 +20,23 @@ load_pyenv() {
     fi
 }
 
-for cmd in pyenv python python3 pip pip3; do
+if ! alias pyenv >/dev/null 2>&1 && ! (( $+functions[pyenv] )); then
+    pyenv() {
+        load_pyenv
+        pyenv "$@"
+    }
+fi
+
+for cmd in python python3 pip pip3; do
     if ! alias $cmd >/dev/null 2>&1 && ! (( $+functions[$cmd] )); then
-        eval "$cmd() { load_pyenv; $cmd \"\$@\"; }"
+        eval "$cmd() {
+            if [[ -n \${CONDA_PREFIX:-} ]]; then
+                command $cmd \"\$@\"
+            else
+                load_pyenv
+                $cmd \"\$@\"
+            fi
+        }"
     fi
 done
 
