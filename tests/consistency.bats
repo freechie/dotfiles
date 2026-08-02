@@ -407,9 +407,9 @@
   ! grep -Fq 'nvim --headless "+Lazy! sync" +qa' install.sh
 }
 
-@test "fff.nvim builds only its Neovim crate without the native downloader" {
-  grep -Fq 'build = "cargo build --release -p fff-nvim"' nvim/lua/plugins/fff.lua
-  ! grep -Fq 'download_or_build_binary' nvim/lua/plugins/fff.lua
+@test "fff.nvim uses the upstream prebuilt binary installer" {
+  grep -Fq 'require("fff.download").download_or_build_binary()' nvim/lua/plugins/fff.lua
+  ! grep -Fq 'cargo build --release' nvim/lua/plugins/fff.lua
 }
 
 @test "markdown preview build uses a JavaScript lockfile" {
