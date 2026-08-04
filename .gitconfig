@@ -1,6 +1,7 @@
 [user]
 	email = johnrichardmolina@gmail.com
 	name = John
+	signingkey = /Users/what/.ssh/id_ed25519_github_signing.pub
 
 [core]
 	editor = nvim
@@ -37,3 +38,9 @@
 	hshow = -c core.pager=\"hunk pager\" show
 	hunkdiff = !hunk diff
 	hunkshow = !hunk show
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
+[tag]
+	gpgSign = true

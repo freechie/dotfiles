@@ -205,8 +205,6 @@ EOF
   [[ "$(readlink "$HOME/.config/nvim")" == "$dir/nvim" ]]
   [ -L "$HOME/.config/starship.toml" ]
   [[ "$(readlink "$HOME/.config/starship.toml")" == "$dir/platforms/macos/starship.toml" ]]
-  [ -L "$HOME/.config/karabiner" ]
-  [[ "$(readlink "$HOME/.config/karabiner")" == "$dir/karabiner" ]]
   [ -L "$HOME/.gitconfig" ]
   [[ "$(readlink "$HOME/.gitconfig")" == "$dir/.gitconfig" ]]
   [ -L "$HOME/.gitignore_global" ]
