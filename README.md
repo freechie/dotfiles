@@ -54,7 +54,6 @@ brew bundle --file=Brewfile.personal-macos
 - tmux: `.tmux.conf`, platform overrides in `tmux/`
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
 - Ghostty: platform configs in `ghostty/`
-- Karabiner-Elements: macOS keyboard mappings in `karabiner/`
 - Starship: platform configs under `platforms/`
 - Git: `.gitconfig`, `.gitignore_global`
 

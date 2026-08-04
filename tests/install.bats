@@ -328,7 +328,6 @@ MOCK
     ".fzf.zsh"
     ".gitconfig"
     ".gitignore_global"
-    "karabiner/karabiner.json"
     "nvim"
     "starship.toml"
     "platforms/macos/.zshrc"

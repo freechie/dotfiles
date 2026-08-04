@@ -884,10 +884,6 @@ build_link_specs() {
     if ghostty_target="$(dotfiles_ghostty_config_target 2>/dev/null)"; then
         add_link_spec "$ghostty_source" "$ghostty_target" "Ghostty config"
     fi
-
-    if dotfiles_is_macos; then
-        add_link_spec "karabiner" "$HOME/.config/karabiner" "Karabiner-Elements config directory"
-    fi
 }
 
 ensure_symlink() {

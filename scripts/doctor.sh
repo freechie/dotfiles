@@ -54,10 +54,6 @@ expected_link_target() {
         ".tmux.conf") printf '%s\n' "$repo_root/.tmux.conf" ;;
         ".config/nvim") printf '%s\n' "$repo_root/nvim" ;;
         ".config/starship.toml") printf '%s\n' "$repo_root/platforms/$platform_dir/starship.toml" ;;
-        ".config/karabiner")
-            dotfiles_is_macos || return 1
-            printf '%s\n' "$repo_root/karabiner"
-            ;;
         *) return 1 ;;
     esac
 }
@@ -197,10 +193,6 @@ printf 'Dotfiles doctor for %s\n' "$(dotfiles_platform)"
 for path in "${DOTFILES_VERIFY_LINKS_COMMON[@]}"; do
     check_link "$path"
 done
-
-if dotfiles_is_macos; then
-    check_link ".config/karabiner"
-fi
 
 if dotfiles_is_linux; then
     for tool in "${DOTFILES_LINUX_VERIFY_TOOLS[@]}"; do
