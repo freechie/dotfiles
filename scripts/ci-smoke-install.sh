@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$repo_root"
 
 platform="${1:-}"
@@ -23,7 +23,8 @@ assert_link() {
     local target="$1"
     local expected="$2"
 
-    test "$(readlink "$target")" = "$expected"
+    test -L "$target"
+    test "$target" -ef "$expected"
 }
 
 assert_clean_worktree() {

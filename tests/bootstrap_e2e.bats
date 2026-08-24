@@ -25,6 +25,23 @@ MOCK
     chmod +x "$TEST_HOME/bin/$cmd"
   done
 
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "Mock $0 $@"
+case " $* " in
+  *" tree-sitter-cli@0.25.10 "*)
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
+#!/bin/bash
+echo "tree-sitter 0.25.10"
+SCRIPT
+    chmod +x "$HOME/.local/bin/tree-sitter"
+    ;;
+esac
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
   cat << 'EOF' > "$TEST_HOME/bin/sudo"
 #!/bin/bash
 exec "$@"

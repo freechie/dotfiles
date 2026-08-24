@@ -316,11 +316,13 @@
   done <<< "$required_packages"
 }
 
-@test "macOS toolchain installs tree-sitter CLI formula" {
+@test "tree-sitter CLI is pinned to the version supported by nvim-treesitter" {
   source config/toolchain.sh
 
-  [[ " ${DOTFILES_BREW_REQUIRED_PACKAGES[*]} " == *" tree-sitter-cli "* ]]
-  grep -Eq '^brew "tree-sitter-cli"$|^brew "tree-sitter-cli",' Brewfile
+  [ "$DOTFILES_TREE_SITTER_CLI_VERSION" = "0.25.10" ]
+  [[ " ${DOTFILES_BREW_REQUIRED_PACKAGES[*]} " != *" tree-sitter-cli "* ]]
+  ! grep -Eq '^brew "tree-sitter-cli"$|^brew "tree-sitter-cli",' Brewfile
+  grep -Fq 'tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION' install.sh
 }
 
 @test "install and CI execution paths use only core Homebrew profile" {
@@ -391,6 +393,36 @@
   grep -Fq 'DOTFILES_FORCE_NVIM_BOOTSTRAP' install.sh
   grep -Fq 'DOTFILES_CI_LOCK_READONLY' nvim/lua/core/lazy.lua
   ! grep -Fq 'nvim --headless "+Lazy! sync" +qa' install.sh
+}
+
+@test "Treesitter config and bootstrap use the pinned plugin API" {
+  grep -Fq 'require("nvim-treesitter.configs").setup({' nvim/lua/plugins/treesitter.lua
+  ! grep -Fq 'require("nvim-treesitter").setup({' nvim/lua/plugins/treesitter.lua
+  grep -Fq 'local ci_smoke = vim.env.DOTFILES_CI_SMOKE_NVIM == "1"' nvim/lua/plugins/treesitter.lua
+  grep -Fq 'ensure_installed = ci_smoke and {} or {' nvim/lua/plugins/treesitter.lua
+  grep -Fq "require('nvim-treesitter.install')" install.sh
+  grep -Fq 'install.ensure_installed_sync(languages)' install.sh
+  grep -Fq "vim.cmd('cquit 1')" install.sh
+  ! grep -Fq "require('nvim-treesitter').install" install.sh
+  grep -Fq "DOTFILES_CI_SMOKE_NVIM=1" scripts/verify-nvim.sh
+  grep -Fq "nvim --headless -i NONE" scripts/verify-nvim.sh
+  grep -Fq "plugin.has_errors(spec) then vim.cmd('cquit 1')" scripts/verify-nvim.sh
+}
+
+@test "installer and verification scripts compare physical link targets" {
+  grep -Fq 'pwd -P' install.sh
+  grep -Fq 'pwd -P' scripts/doctor.sh
+  grep -Fq 'pwd -P' scripts/verify-nvim.sh
+  grep -Fq 'pwd -P' scripts/ci-smoke-install.sh
+  grep -Fq '"$target_link" -ef "$source_file"' install.sh
+  grep -Fq '"$absolute_target" -ef "$expected"' scripts/doctor.sh
+  grep -Fq '"$target" -ef "$expected"' scripts/ci-smoke-install.sh
+}
+
+@test "shells and doctor prefer managed user tools over package-manager tools" {
+  [ "$(tail -n 1 shell/zsh/path.zsh)" = 'source "$DOTFILES_ROOT/shell/zsh/path/common.zsh"' ]
+  [ "$(tail -n 1 shell/bash/profile.bash)" = '. "$DOTFILES_ROOT/shell/bash/common.bash"' ]
+  grep -Fq 'export PATH="$HOME/.local/bin:$PATH"' scripts/doctor.sh
 }
 
 @test "fff.nvim uses the upstream prebuilt binary installer" {

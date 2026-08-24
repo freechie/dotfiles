@@ -2,12 +2,14 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 
 # shellcheck disable=SC1091
 . "$repo_root/shell/shared/platform.sh"
 # shellcheck disable=SC1091
 . "$repo_root/config/toolchain.sh"
+
+export PATH="$HOME/.local/bin:$PATH"
 
 failures=0
 warnings=0
@@ -70,7 +72,7 @@ check_link() {
         return
     fi
 
-    if [[ "$(readlink "$absolute_target")" != "$expected" ]]; then
+    if [[ ! "$absolute_target" -ef "$expected" ]]; then
         fail "$relative_target points to $(readlink "$absolute_target"), expected $expected"
         return
     fi
@@ -132,6 +134,22 @@ check_min_version() {
         pass "$tool version $have satisfies minimum $need"
     else
         fail "$tool version $have is below minimum $need"
+    fi
+}
+
+check_tree_sitter_cli_version() {
+    local have=""
+
+    if ! command -v tree-sitter >/dev/null 2>&1; then
+        fail "tree-sitter is missing; need $DOTFILES_TREE_SITTER_CLI_VERSION"
+        return
+    fi
+
+    have="$(tool_version tree-sitter || true)"
+    if [[ "$have" == "$DOTFILES_TREE_SITTER_CLI_VERSION" ]]; then
+        pass "tree-sitter version $have matches nvim-treesitter"
+    else
+        fail "tree-sitter version ${have:-unknown} is incompatible; need $DOTFILES_TREE_SITTER_CLI_VERSION"
     fi
 }
 
@@ -222,7 +240,7 @@ check_min_version npm
 check_min_version go
 check_min_version php
 check_min_version composer
-check_min_version tree-sitter
+check_tree_sitter_cli_version
 check_locale
 check_default_shell
 check_zsh_completion_permissions

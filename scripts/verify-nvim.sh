@@ -2,12 +2,21 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/.." && pwd -P)"
 
 # shellcheck disable=SC1091
 . "$repo_root/config/toolchain.sh"
 
 failures=0
+verify_tmp=""
+
+cleanup() {
+    if [[ -n "$verify_tmp" ]]; then
+        rm -rf "$verify_tmp"
+    fi
+}
+
+trap cleanup EXIT
 
 fail() {
     failures=$((failures + 1))
@@ -47,7 +56,15 @@ do
 done
 
 if command -v nvim >/dev/null 2>&1; then
-    if nvim --headless '+quitall' >/dev/null 2>&1; then
+    verify_tmp="$(mktemp -d)"
+    mkdir -p "$verify_tmp/state" "$verify_tmp/cache"
+    if XDG_STATE_HOME="$verify_tmp/state" \
+        XDG_CACHE_HOME="$verify_tmp/cache" \
+        DOTFILES_CI_SMOKE_NVIM=1 \
+        nvim --headless -i NONE \
+        "+lua local config = require('lazy.core.config'); local plugin = require('lazy.core.plugin'); for _, spec in pairs(config.spec.plugins) do if plugin.has_errors(spec) then vim.cmd('cquit 1') end end" \
+        +qa >/dev/null 2>&1
+    then
         pass "nvim headless startup"
     else
         fail "nvim headless startup"

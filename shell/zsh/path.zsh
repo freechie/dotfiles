@@ -1,5 +1,3 @@
-source "$DOTFILES_ROOT/shell/zsh/path/common.zsh"
-
 case "${DOTFILES_PLATFORM:-}" in
   macos)
     source "$DOTFILES_ROOT/shell/zsh/path/macos.zsh"
@@ -8,3 +6,5 @@ case "${DOTFILES_PLATFORM:-}" in
     source "$DOTFILES_ROOT/shell/zsh/path/linux.zsh"
     ;;
 esac
+
+source "$DOTFILES_ROOT/shell/zsh/path/common.zsh"

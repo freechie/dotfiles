@@ -11,7 +11,7 @@ DOTFILES_APT_PACKAGES=(
 )
 
 DOTFILES_BREW_REQUIRED_PACKAGES=(
-    neovim node php composer lua luarocks go ruby tree-sitter-cli
+    neovim node php composer lua luarocks go ruby
     tmux ripgrep fd eza fzf shellcheck starship openjdk
 )
 
@@ -29,7 +29,9 @@ DOTFILES_MIN_VERSION_npm="9.2.0"
 DOTFILES_MIN_VERSION_go="1.22.0"
 DOTFILES_MIN_VERSION_php="8.2.0"
 DOTFILES_MIN_VERSION_composer="2.0.0"
-DOTFILES_MIN_VERSION_tree_sitter="0.26.0"
+
+# nvim-treesitter at the commit in nvim/lazy-lock.json supports CLI 0.25.x.
+DOTFILES_TREE_SITTER_CLI_VERSION="0.25.10"
 
 DOTFILES_HOMEBREW_INSTALL_COMMIT="5753984d1eb214c40e86489416be2d38972f836a"
 DOTFILES_HOMEBREW_INSTALL_SHA256="f3e91784ffeda32bc397de7acc1154724cc47522a459c9ac656cca176eeba457"

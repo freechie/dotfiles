@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 # shellcheck disable=SC1091
 . "$dir/shell/shared/platform.sh"
 # shellcheck disable=SC1091
@@ -603,10 +603,8 @@ install_rustup() {
 
 install_tree_sitter_cli() {
     local npm_prefix="$HOME/.local"
-
-    if ! dotfiles_is_linux; then
-        return
-    fi
+    local installed_version=""
+    local pinned_binary="$npm_prefix/bin/tree-sitter"
 
     if is_ci_smoke_install; then
         echo "Skipping tree-sitter-cli install: CI smoke mode."
@@ -614,23 +612,36 @@ install_tree_sitter_cli() {
     fi
 
     if command -v tree-sitter >/dev/null 2>&1; then
-        echo "tree-sitter-cli is already installed."
-        return
+        installed_version="$(tree-sitter --version 2>/dev/null | awk '{ print $2 }')"
+    fi
+
+    if [[ "$installed_version" == "$DOTFILES_TREE_SITTER_CLI_VERSION" ]]; then
+        echo "tree-sitter-cli $DOTFILES_TREE_SITTER_CLI_VERSION is already installed."
+        return 0
     fi
 
     if ! command -v npm >/dev/null 2>&1; then
         echo "Skipping tree-sitter-cli install: npm not found."
-        return
+        return 0
     fi
 
-    echo "Installing tree-sitter-cli via npm..."
+    if [[ -n "$installed_version" ]]; then
+        echo "Replacing incompatible tree-sitter-cli $installed_version."
+    fi
+
+    echo "Installing tree-sitter-cli $DOTFILES_TREE_SITTER_CLI_VERSION via npm..."
     if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: npm install -g --prefix $npm_prefix tree-sitter-cli"
+        echo "DRY RUN: npm install -g --prefix $npm_prefix tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION"
         return
     fi
 
     mkdir -p "$npm_prefix"
-    npm install -g --prefix "$npm_prefix" tree-sitter-cli
+    npm install -g --prefix "$npm_prefix" "tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION"
+
+    if [[ ! -x "$pinned_binary" ]] || [[ "$("$pinned_binary" --version 2>/dev/null | awk '{ print $2 }')" != "$DOTFILES_TREE_SITTER_CLI_VERSION" ]]; then
+        echo "tree-sitter-cli installation did not produce version $DOTFILES_TREE_SITTER_CLI_VERSION at $pinned_binary." >&2
+        return 1
+    fi
 }
 
 ensure_utf8_locale_linux() {
@@ -939,7 +950,7 @@ ensure_symlink() {
     local target_link="$2"
     local label="$3"
     local source_file="$dir/$relative_source"
-    local target_dir current_link=""
+    local target_dir
 
     target_dir="$(dirname "$target_link")"
     run_cmd mkdir -p "$target_dir"
@@ -949,15 +960,11 @@ ensure_symlink() {
         run_cmd mv "$target_link" "$olddir/"
     fi
 
-    if [[ -L "$target_link" ]]; then
-        current_link="$(readlink "$target_link")"
-    fi
-
-    if [[ "$current_link" != "$source_file" ]]; then
+    if [[ -L "$target_link" && "$target_link" -ef "$source_file" ]]; then
+        echo "Symlink for $label is already correctly set up."
+    else
         echo "Creating symlink for $label."
         run_cmd ln -snf "$source_file" "$target_link"
-    else
-        echo "Symlink for $label is already correctly set up."
     fi
 }
 
@@ -994,7 +1001,7 @@ run_nvim_bootstrap_step() {
 }
 
 bootstrap_neovim_environment() {
-    local treesitter_languages lua_list devdocs_entries devdocs_args
+    local treesitter_languages lua_list treesitter_lua devdocs_entries devdocs_args
     treesitter_languages=("${DOTFILES_NVIM_TREESITTER_LANGUAGES[@]}")
     devdocs_entries=("${DOTFILES_DEVDOCS_ENTRIES[@]}")
 
@@ -1028,9 +1035,10 @@ bootstrap_neovim_environment() {
 
     lua_list="$(printf '"%s",' "${treesitter_languages[@]}")"
     lua_list="${lua_list%,}"
+    treesitter_lua="local languages = {${lua_list}}; local ok, err = pcall(function() local install = require('nvim-treesitter.install'); install.ensure_installed_sync(languages); install.update({ with_sync = true })(languages); local missing = {}; for _, language in ipairs(languages) do if #vim.api.nvim_get_runtime_file('parser/' .. language .. '.so', true) == 0 then table.insert(missing, language) end end; if #missing > 0 then error('missing Treesitter parsers: ' .. table.concat(missing, ', ')) end end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd('cquit 1') end"
 
     echo "Bootstrapping treesitter parsers..."
-    run_nvim_bootstrap_step "Treesitter parser bootstrap" "+lua require('nvim-treesitter').install({${lua_list}}):wait(300000)" "+TSUpdateSync" +qa
+    run_nvim_bootstrap_step "Treesitter parser bootstrap" "+lua ${treesitter_lua}" +qa
 
     devdocs_args="$(printf '%s ' "${devdocs_entries[@]}")"
     devdocs_args="${devdocs_args% }"

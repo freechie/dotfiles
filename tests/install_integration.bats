@@ -43,6 +43,16 @@ EOF
   cat << 'EOF' > "$TEST_HOME/bin/npm"
 #!/bin/bash
 echo "Mock npm $@"
+case " $* " in
+  *" tree-sitter-cli@0.25.10 "*)
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
+#!/bin/bash
+echo "tree-sitter 0.25.10"
+SCRIPT
+    chmod +x "$HOME/.local/bin/tree-sitter"
+    ;;
+esac
 exit 0
 EOF
   chmod +x "$TEST_HOME/bin/npm"
@@ -327,9 +337,9 @@ EOF
   fi
   [[ "$output" == *"Mock locale-gen en_US.UTF-8"* ]]
   [[ "$output" == *"Mock update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8"* ]]
-  [[ "$output" == *"Installing tree-sitter-cli via npm..."* || "$output" == *"tree-sitter-cli is already installed."* ]]
-  if [[ "$output" == *"Installing tree-sitter-cli via npm..."* ]]; then
-    [[ "$output" == *"Mock npm install -g --prefix $HOME/.local tree-sitter-cli"* ]]
+  [[ "$output" == *"Installing tree-sitter-cli 0.25.10 via npm..."* || "$output" == *"tree-sitter-cli 0.25.10 is already installed."* ]]
+  if [[ "$output" == *"Installing tree-sitter-cli 0.25.10 via npm..."* ]]; then
+    [[ "$output" == *"Mock npm install -g --prefix $HOME/.local tree-sitter-cli@0.25.10"* ]]
   fi
   [[ "$output" == *"Installing hunkdiff for Git Hunk aliases..."* || "$output" == *"hunkdiff is already installed."* ]]
   if [[ "$output" == *"Installing hunkdiff for Git Hunk aliases..."* ]]; then

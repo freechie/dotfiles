@@ -4,13 +4,16 @@ return {
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
+			local ci_smoke = vim.env.DOTFILES_CI_SMOKE_NVIM == "1"
 			local parser_install_dir = vim.fn.stdpath("data") .. "/site"
-			vim.opt.runtimepath:prepend(parser_install_dir)
+			if not ci_smoke then
+				vim.opt.runtimepath:prepend(parser_install_dir)
+			end
 
-			require("nvim-treesitter").setup({
-				parser_install_dir = parser_install_dir,
+			require("nvim-treesitter.configs").setup({
+				parser_install_dir = ci_smoke and nil or parser_install_dir,
 				-- List of language parsers to install
-				ensure_installed = {
+				ensure_installed = ci_smoke and {} or {
 					"python",
 					"javascript",
 					"typescript",
@@ -34,7 +37,7 @@ return {
 					"markdown_inline",
 					"latex",
 				},
-				auto_install = true,
+				auto_install = not ci_smoke,
 				highlight = {
 					enable = true,
 					disable = { "markdown", "markdown_inline" },

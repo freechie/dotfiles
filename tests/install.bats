@@ -21,6 +21,23 @@ MOCK
     chmod +x "$TEST_HOME/bin/$cmd"
   done
 
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "Mock $0 $@"
+case " $* " in
+  *" tree-sitter-cli@0.25.10 "*)
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
+#!/bin/bash
+echo "tree-sitter 0.25.10"
+SCRIPT
+    chmod +x "$HOME/.local/bin/tree-sitter"
+    ;;
+esac
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
   cat > "$TEST_HOME/bin/uname" <<'MOCK'
 #!/bin/bash
 if [ "$1" = "-m" ]; then
@@ -160,6 +177,55 @@ MOCK
   [[ "$output" != *"Mock gem install"* ]]
 }
 
+@test "installer replaces an incompatible tree-sitter CLI with the pinned version" {
+  cat > "$TEST_HOME/bin/tree-sitter" <<'MOCK'
+#!/bin/bash
+echo "tree-sitter 0.26.13"
+MOCK
+  chmod +x "$TEST_HOME/bin/tree-sitter"
+
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+printf '%s\n' "$*" > "$NPM_ARGS_FILE"
+mkdir -p "$HOME/.local/bin"
+cat > "$HOME/.local/bin/tree-sitter" <<'BIN'
+#!/bin/bash
+echo "tree-sitter 0.25.10"
+BIN
+chmod +x "$HOME/.local/bin/tree-sitter"
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  run env DOTFILES_PLATFORM=macos NPM_ARGS_FILE="$BATS_TEST_TMPDIR/npm.args" bash -c '
+    source ./install.sh
+    install_tree_sitter_cli
+  '
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Installing tree-sitter-cli 0.25.10 via npm"* ]]
+  run cat "$BATS_TEST_TMPDIR/npm.args"
+  [ "$status" -eq 0 ]
+  [ "$output" = "install -g --prefix $HOME/.local tree-sitter-cli@0.25.10" ]
+}
+
+@test "installer keeps the pinned tree-sitter CLI" {
+  cat > "$TEST_HOME/bin/tree-sitter" <<'MOCK'
+#!/bin/bash
+echo "tree-sitter 0.25.10"
+MOCK
+  chmod +x "$TEST_HOME/bin/tree-sitter"
+
+  run env DOTFILES_PLATFORM=macos bash -c '
+    source ./install.sh
+    install_tree_sitter_cli
+  '
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"tree-sitter-cli 0.25.10 is already installed"* ]]
+  [[ "$output" != *"Mock $TEST_HOME/bin/npm"* ]]
+}
+
 @test "install.sh can force Neovim bootstrap in non-interactive CI" {
   cat > "$TEST_HOME/bin/nvim" <<'MOCK'
 #!/bin/bash
@@ -177,7 +243,21 @@ MOCK
   [[ "$output" == *"Mock nvim --headless +Lazy! restore"* ]]
   [[ "$output" == *"Bootstrapping Mason tooling..."* ]]
   [[ "$output" == *"Bootstrapping treesitter parsers..."* ]]
+  [[ "$output" == *"require('nvim-treesitter.install')"* ]]
+  [[ "$output" == *"ensure_installed_sync"* ]]
+  [[ "$output" == *"vim.cmd('cquit 1')"* ]]
+  [[ "$output" != *"require('nvim-treesitter').install"* ]]
   [[ "$output" == *"Bootstrapping DevDocs offline docs..."* ]]
+}
+
+@test "install.sh canonicalizes a symlinked checkout path" {
+  local alias_path="$BATS_TEST_TMPDIR/dotfiles-alias"
+  ln -s "$PWD" "$alias_path"
+
+  run bash -c 'cd "$1"; source ./install.sh; printf "%s\n" "$dir"' _ "$alias_path"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "$(pwd -P)" ]
 }
 
 @test "install.sh fails before running a mismatched downloaded installer" {

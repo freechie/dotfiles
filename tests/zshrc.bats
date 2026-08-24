@@ -264,6 +264,18 @@ EOF
   [[ "$output" != /opt/homebrew/bin:* ]]
 }
 
+@test "zshrc prefers user-installed tools over Homebrew" {
+  run env PATH="/usr/bin:/bin" zsh -c '
+    DOTFILES_PLATFORM=macos source .zshrc 2>/tmp/zshrc_err
+    print -r -- "$path[(i)$HOME/.local/bin] $path[(i)/opt/homebrew/bin]"
+  '
+
+  [ "$status" -eq 0 ]
+  local local_index="${output%% *}"
+  local brew_index="${output##* }"
+  [ "$local_index" -lt "$brew_index" ]
+}
+
 @test "zshrc loads platform-specific plugins" {
   run zsh -c "DOTFILES_PLATFORM=macos source .zshrc 2>/tmp/zshrc_err; print -l -- \$plugins"
   [[ "$output" == *"brew"* ]]

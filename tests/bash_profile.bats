@@ -19,6 +19,23 @@ setup() {
   [[ "$output" == *"update is a function"* ]]
 }
 
+@test "bash_profile prefers user-installed tools over Homebrew" {
+  run env DOTFILES_PLATFORM=macos bash --noprofile --norc -c '
+    PATH=/usr/bin:/bin
+    source ./.bash_profile
+    IFS=: read -r -a path_parts <<< "$PATH"
+    local_index=0
+    brew_index=0
+    for index in "${!path_parts[@]}"; do
+      [ "${path_parts[$index]}" = "$HOME/.local/bin" ] && local_index="$index"
+      [ "${path_parts[$index]}" = "/opt/homebrew/bin" ] && brew_index="$index"
+    done
+    [ "$local_index" -lt "$brew_index" ]
+  '
+
+  [ "$status" -eq 0 ]
+}
+
 @test "bash_profile loads Linux-specific path and update function" {
   run env DOTFILES_PLATFORM=linux PATH=/usr/bin:/bin:/usr/sbin:/sbin bash -lc 'source ./.bash_profile; printf "%s\n" "$PATH"; type update'
   [ "$status" -eq 0 ]
