@@ -22,6 +22,11 @@ run_deferred_error_step() {
     local log_file status
     shift
 
+    if [[ -n "$DRY_RUN" ]]; then
+        "$@"
+        return
+    fi
+
     if [[ -z "$install_error_dir" ]]; then
         install_error_dir="$(mktemp -d)"
     fi
@@ -62,8 +67,11 @@ print_install_error_summary() {
 cleanup_install_error_logs() {
     if [[ -n "$install_error_dir" ]]; then
         rm -rf "$install_error_dir"
+        install_error_dir=""
     fi
 }
+
+trap cleanup_install_error_logs EXIT
 
 run_cmd() {
     if [[ -n "$DRY_RUN" ]]; then
@@ -142,6 +150,20 @@ platform_label() {
     esac
 }
 
+validate_platform() {
+    local platform
+    platform="$(dotfiles_platform)"
+
+    case "$platform" in
+        macos|linux) return 0 ;;
+        *)
+            echo "Unsupported platform: $platform" >&2
+            echo "Supported platforms are macOS and Linux." >&2
+            return 1
+            ;;
+    esac
+}
+
 print_linux_package_workaround() {
     local apt_packages
     apt_packages="$(dotfiles_join_by ' ' "${DOTFILES_APT_PACKAGES[@]}")"
@@ -172,6 +194,10 @@ confirm_proceed() {
     echo "--------------------------------------------------"
     echo "Detected platform: $(platform_label)"
     echo "This script will:"
+    echo "$step. Backup existing dotfiles to $olddir."
+    ((step++))
+    echo "$step. Create symlinks for zsh, tmux, nvim, etc."
+    ((step++))
     if should_manage_dependencies; then
         if dotfiles_is_macos; then
             echo "$step. Install Homebrew (if missing)."
@@ -189,10 +215,6 @@ confirm_proceed() {
     else
         echo "$step. Skip dependency installation."
     fi
-    ((step++))
-    echo "$step. Backup existing dotfiles to $olddir."
-    ((step++))
-    echo "$step. Create symlinks for zsh, tmux, nvim, etc."
     ((step++))
     echo "$step. Set default shell to zsh when available."
     ((step++))
@@ -281,8 +303,14 @@ download_verified_file() {
     local url="$2"
     local output_path="$3"
     local expected_sha256="$4"
+    local retries="${DOTFILES_DOWNLOAD_RETRIES:-3}"
+    local retry_delay="${DOTFILES_DOWNLOAD_RETRY_DELAY_SECONDS:-2}"
 
-    curl -fsSL "$url" -o "$output_path"
+    curl -fsSL "$url" -o "$output_path" \
+        --retry "$retries" \
+        --retry-delay "$retry_delay" \
+        --retry-all-errors \
+        --connect-timeout 20
     verify_sha256 "$label" "$output_path" "$expected_sha256"
 }
 
@@ -291,7 +319,7 @@ prepare_backup_dir() {
     run_cmd mkdir -p "$olddir"
 }
 
-check_and_install_lldb() {
+warn_if_lldb_missing() {
     if ! dotfiles_is_macos; then
         return
     fi
@@ -304,13 +332,9 @@ check_and_install_lldb() {
         echo ""
         echo "    xcode-select --install"
         echo ""
-        echo "After installation, re-run this script."
+        echo "Continuing without CodeLLDB support."
         echo "---------------------------------------------------------------------"
-        if [[ -n "$DRY_RUN" ]]; then
-            echo "DRY RUN: would exit due to missing LLDB."
-            return
-        fi
-        exit 1
+        return
     fi
 
     echo "LLDB is already installed."
@@ -664,10 +688,13 @@ install_zsh_extras() {
         return
     fi
 
-    install_oh_my_zsh
-    install_omz_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
-    install_omz_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
-    install_omz_plugin "fzf-tab" "https://github.com/Aloxaf/fzf-tab"
+    run_deferred_error_step "Oh My Zsh install" install_oh_my_zsh
+    run_deferred_error_step "zsh-autosuggestions install" \
+        install_omz_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions"
+    run_deferred_error_step "zsh-syntax-highlighting install" \
+        install_omz_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    run_deferred_error_step "fzf-tab install" \
+        install_omz_plugin "fzf-tab" "https://github.com/Aloxaf/fzf-tab"
 }
 
 install_hunkdiff() {
@@ -741,7 +768,7 @@ install_ruby_neovim_host() {
         return
     fi
 
-    gem install --user-install neovim
+    gem install --user-install neovim || return $?
     gem_bindir="$(ruby -r rubygems -e 'print Gem.bindir(Gem.user_dir)')"
     mkdir -p "$HOME/.local/bin"
     if [[ -x "$gem_bindir/neovim-ruby-host" ]]; then
@@ -754,6 +781,8 @@ install_dependencies() {
         echo "Skipping dependency installation (--skip-deps)."
         return
     fi
+
+    ensure_homebrew
 
     if dotfiles_is_linux; then
         install_linux_dependencies
@@ -805,7 +834,10 @@ ensure_default_shell_is_zsh() {
     fi
 
     echo "Setting default shell to zsh ($zsh_path)..."
-    run_cmd chsh -s "$zsh_path"
+    if ! run_cmd chsh -s "$zsh_path"; then
+        echo "WARNING: Could not change the default shell."
+        echo "Set it manually with: chsh -s $zsh_path"
+    fi
 }
 
 install_tpm() {
@@ -884,6 +916,22 @@ build_link_specs() {
     if ghostty_target="$(dotfiles_ghostty_config_target 2>/dev/null)"; then
         add_link_spec "$ghostty_source" "$ghostty_target" "Ghostty config"
     fi
+}
+
+validate_link_sources() {
+    local spec relative_source target_link label source_file
+    local failures=0
+
+    for spec in "${link_specs[@]}"; do
+        IFS='|' read -r relative_source target_link label <<< "$spec"
+        source_file="$dir/$relative_source"
+        if [[ ! -e "$source_file" && ! -L "$source_file" ]]; then
+            echo "Missing link source: $source_file" >&2
+            failures=1
+        fi
+    done
+
+    return "$failures"
 }
 
 ensure_symlink() {
@@ -995,26 +1043,27 @@ main() {
     local install_status=0
 
     parse_args "$@"
+    validate_platform
+    build_link_specs
+    validate_link_sources
     confirm_proceed
     prepare_backup_dir
-    ensure_homebrew
+    install_links
     install_dependencies
     export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
-    echo "Checking for required dependencies..."
-    check_and_install_lldb
-    build_link_specs
-    install_links
+    echo "Checking optional platform tools..."
+    warn_if_lldb_missing
     ensure_default_shell_is_zsh
-    install_starship
-    install_rustup
-    install_tree_sitter_cli
+    run_deferred_error_step "Starship install" install_starship
+    run_deferred_error_step "Rustup install" install_rustup
+    run_deferred_error_step "tree-sitter-cli install" install_tree_sitter_cli
     ensure_utf8_locale_linux
     install_zsh_extras
-    install_hunkdiff
-    install_node_neovim_host
-    install_ruby_neovim_host
-    install_tpm
-    install_pynvim_provider
+    run_deferred_error_step "hunkdiff install" install_hunkdiff
+    run_deferred_error_step "Node.js Neovim host install" install_node_neovim_host
+    run_deferred_error_step "Ruby Neovim host install" install_ruby_neovim_host
+    run_deferred_error_step "Tmux Plugin Manager install" install_tpm
+    run_deferred_error_step "Python Neovim provider install" install_pynvim_provider
     bootstrap_neovim_environment
 
     if ! print_install_error_summary; then

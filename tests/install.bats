@@ -35,7 +35,7 @@ MOCK
 setup_linux_minimal_path() {
   local cmd
 
-  for cmd in bash date dirname mkdir pwd grep; do
+  for cmd in bash date dirname ln mkdir mv pwd readlink grep; do
     link_host_cmd "$cmd"
   done
 
@@ -53,7 +53,7 @@ MOCK
 setup_macos_minimal_path() {
   local cmd
 
-  for cmd in bash date dirname mkdir pwd; do
+  for cmd in bash date dirname ln mkdir mv pwd readlink; do
     link_host_cmd "$cmd"
   done
 
@@ -239,7 +239,89 @@ MOCK
   run env HOME="$HOME" PATH="$TEST_HOME/bin" DOTFILES_PLATFORM=macos /bin/bash ./install.sh --dry-run
   [ "$status" -eq 0 ]
   [[ "$output" == *"WARNING: 'lldb' command not found."* ]]
-  [[ "$output" == *"DRY RUN: would exit due to missing LLDB."* ]]
+  [[ "$output" == *"Continuing without CodeLLDB support."* ]]
+}
+
+@test "install.sh rejects unsupported platforms before changing HOME" {
+  run env DOTFILES_PLATFORM=solaris ./install.sh --dry-run
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unsupported platform: solaris"* ]]
+  [ ! -e "$HOME/.zshrc" ]
+  run bash -c 'compgen -G "$HOME/dotfiles_backup_*"'
+  [ "$status" -eq 1 ]
+}
+
+@test "install.sh validates link sources before installation" {
+  run bash -c '
+    source ./install.sh
+    link_specs=("missing-config|$HOME/.missing-config|missing config")
+    validate_link_sources
+  '
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Missing link source: $PWD/missing-config"* ]]
+}
+
+@test "skip-deps does not bootstrap Homebrew" {
+  rm -f "$TEST_HOME/bin/"*
+  setup_macos_minimal_path
+
+  cat > "$TEST_HOME/bin/curl" <<'MOCK'
+#!/bin/bash
+echo "curl should not run with --skip-deps" >&2
+exit 42
+MOCK
+  chmod +x "$TEST_HOME/bin/curl"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin" DOTFILES_PLATFORM=macos /bin/bash ./install.sh --dry-run --skip-deps
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping dependency installation (--skip-deps)."* ]]
+  [[ "$output" != *"Homebrew not found. Installing..."* ]]
+  [[ "$output" != *"curl should not run with --skip-deps"* ]]
+}
+
+@test "verified downloads retry transient failures" {
+  cat > "$TEST_HOME/bin/curl" <<'MOCK'
+#!/bin/bash
+printf '%s\n' "$*" > "$CURL_ARGS_FILE"
+: > "$4"
+MOCK
+  chmod +x "$TEST_HOME/bin/curl"
+
+  run env CURL_ARGS_FILE="$BATS_TEST_TMPDIR/curl.args" \
+    DOTFILES_DOWNLOAD_RETRIES=5 \
+    DOTFILES_DOWNLOAD_RETRY_DELAY_SECONDS=0 \
+    bash -c '
+      source ./install.sh
+      verify_sha256() { return 0; }
+      download_verified_file artifact https://example.invalid/artifact "$HOME/artifact" expected
+    '
+
+  [ "$status" -eq 0 ]
+  run cat "$BATS_TEST_TMPDIR/curl.args"
+  [[ "$output" == *"--retry 5"* ]]
+  [[ "$output" == *"--retry-delay 0"* ]]
+  [[ "$output" == *"--retry-all-errors"* ]]
+  [[ "$output" == *"--connect-timeout 20"* ]]
+}
+
+@test "installer finishes independent optional steps before reporting failures" {
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "npm unavailable" >&2
+exit 41
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  run env DOTFILES_PLATFORM=macos bash -c 'printf "y\n" | ./install.sh'
+
+  [ "$status" -eq 1 ]
+  [ -L "$HOME/.zshrc" ]
+  [[ "$output" == *"npm unavailable"* ]]
+  [[ "$output" == *"Installing Ruby Neovim host..."* ]]
+  [[ "$output" == *"Errors"* ]]
 }
 
 @test "install.sh skips Homebrew on Linux by default and prints workaround" {

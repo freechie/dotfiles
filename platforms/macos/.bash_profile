@@ -15,7 +15,6 @@ export DOTFILES_PLATFORM="macos"
 
 # shellcheck disable=SC1091
 . "$DOTFILES_ROOT/shell/bash/entrypoint.bash"
-. "$HOME/.cargo/env"
 
 # >>> juliaup initialize >>>
 
@@ -33,4 +32,3 @@ esac
 [ -f "/Users/what/.julia/juliaup/completions/bash.sh" ] && source "/Users/what/.julia/juliaup/completions/bash.sh"
 
 # <<< juliaup initialize <<<
-

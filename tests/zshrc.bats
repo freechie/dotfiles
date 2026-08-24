@@ -158,6 +158,18 @@ EOF
   [ "$status" -eq 1 ]
 }
 
+@test "Linux zsh profile does not require pyenv" {
+  run env HOME="$HOME" PATH=/usr/bin:/bin zsh -c '
+    source ./platforms/ubuntu/.zshrc 2>"$HOME/linux-zsh.err"
+    printf "loaded\n"
+  '
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "loaded" ]
+  run grep -F "pyenv" "$HOME/linux-zsh.err"
+  [ "$status" -eq 1 ]
+}
+
 @test "zshrc loads custom functions" {
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; type mkcd"
   [[ "$output" == *"mkcd is a shell function"* ]]

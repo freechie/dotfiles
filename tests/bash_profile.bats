@@ -26,3 +26,14 @@ setup() {
   [[ "$output" == *".local/bin"* ]]
   [[ "$output" == *"update is a function"* ]]
 }
+
+@test "platform profiles do not require optional language managers" {
+  run env HOME="$HOME" PATH=/usr/bin:/bin bash --noprofile --norc -c '
+    source ./platforms/macos/.bash_profile
+    source ./platforms/ubuntu/.bash_profile
+    printf "loaded\n"
+  '
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "loaded" ]
+}

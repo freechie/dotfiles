@@ -15,11 +15,23 @@ Useful modes:
 
 ```bash
 ./install.sh --dry-run    # show planned changes only
-./install.sh --skip-deps  # skip core dependency installation
+./install.sh --skip-deps  # skip Homebrew, apt, and the Linux Neovim install
 ```
 
 The installer backs up replaced files to `~/dotfiles_backup_<timestamp>` and
-then creates symlinks for the tracked configs.
+then creates symlinks for the tracked configs. It validates the platform and
+every link source before writing to the home directory. The links are activated
+before package downloads, so a package-manager failure does not discard the
+working configuration.
+
+Standalone downloads retry transient network errors and require a matching
+SHA256 checksum. Independent setup steps such as shell plugins and Neovim host
+providers continue after one fails, then appear together in the final error
+report. Fix the reported cause and rerun the installer. Existing links remain
+in place.
+
+`--skip-deps` skips system package setup but still installs optional shell and
+editor helpers when their package managers are already available.
 
 ## Platforms
 

@@ -171,6 +171,18 @@ check_zsh_completion_permissions() {
     fi
 }
 
+check_lldb() {
+    if ! dotfiles_is_macos; then
+        return
+    fi
+
+    if command -v lldb >/dev/null 2>&1; then
+        pass "lldb is available for CodeLLDB"
+    else
+        warn "lldb is missing; install Xcode Command Line Tools for CodeLLDB support"
+    fi
+}
+
 verify_nvim_contract() {
     if [[ "$run_nvim_verify" -ne 1 ]]; then
         return
@@ -214,6 +226,7 @@ check_min_version tree-sitter
 check_locale
 check_default_shell
 check_zsh_completion_permissions
+check_lldb
 verify_nvim_contract
 
 printf 'Doctor summary: %s failure(s), %s warning(s)\n' "$failures" "$warnings"
