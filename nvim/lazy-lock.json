@@ -11,7 +11,7 @@
   "conform.nvim": { "branch": "master", "commit": "016802de402556da54c36bd7359b441266b01cdd" },
   "dark-notify": { "branch": "master", "commit": "65a27ed5bfadeb224a888e3897e43c840c87ce83" },
   "diffview.nvim": { "branch": "main", "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a" },
-  "fff.nvim": { "branch": "main", "commit": "896e11c3df821655678630bae3073e145dff7681" },
+  "fff.nvim": { "branch": "main", "commit": "6020063092ce24212a7656d101bda8a521f2a09e" },
   "fidget.nvim": { "branch": "main", "commit": "6f793b2bcd2d35e201c09520f698bb763220908a" },
   "flash.nvim": { "branch": "main", "commit": "5f0f270fdc7c5b0c21d903ee85b9cb06f2ac636a" },
   "friendly-snippets": { "branch": "main", "commit": "6cd7280adead7f586db6fccbd15d2cac7e2188b9" },

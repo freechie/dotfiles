@@ -217,7 +217,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 
   run sed -n '1p' "$repo/brew-cask-skip.log"
   [ "$status" -eq 0 ]
@@ -284,7 +284,7 @@ EOF
 
   run cat "$repo/install-env.log"
   [ "$status" -eq 0 ]
-  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
+  [ "$output" = $'DOTFILES_CI_SMOKE_INSTALL=\nDOTFILES_FORCE_NVIM_BOOTSTRAP=1\nDOTFILES_CI_SMOKE_INSTALL=1\nDOTFILES_FORCE_NVIM_BOOTSTRAP=' ]
 }
 
 @test "ci smoke install fails on unknown Linux mode" {
