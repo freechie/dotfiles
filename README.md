@@ -6,7 +6,7 @@ tmux, Neovim, Ghostty, Starship, Git config, installer scripts, and CI checks.
 ## Install
 
 ```bash
-git clone https://github.com/richtxteditor/dotfiles.git ~/dotfiles
+git clone https://github.com/freechie/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ./install.sh
 ```
