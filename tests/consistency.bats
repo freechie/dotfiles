@@ -319,10 +319,10 @@
 @test "tree-sitter CLI is pinned to the version supported by nvim-treesitter" {
   source config/toolchain.sh
 
-  [ "$DOTFILES_TREE_SITTER_CLI_VERSION" = "0.25.10" ]
+  [ "$DOTFILES_TREE_SITTER_CLI_VERSION" = "0.26.11" ]
   [[ " ${DOTFILES_BREW_REQUIRED_PACKAGES[*]} " != *" tree-sitter-cli "* ]]
   ! grep -Eq '^brew "tree-sitter-cli"$|^brew "tree-sitter-cli",' Brewfile
-  grep -Fq 'tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION' install.sh
+  grep -Fq 'cargo install --locked --force --root "$cargo_root" --version "$DOTFILES_TREE_SITTER_CLI_VERSION" tree-sitter-cli' install.sh
 }
 
 @test "install and CI execution paths use only core Homebrew profile" {
@@ -396,14 +396,15 @@
 }
 
 @test "Treesitter config and bootstrap use the pinned plugin API" {
-  grep -Fq 'require("nvim-treesitter.configs").setup({' nvim/lua/plugins/treesitter.lua
-  ! grep -Fq 'require("nvim-treesitter").setup({' nvim/lua/plugins/treesitter.lua
+  grep -Fq 'branch = "main"' nvim/lua/plugins/treesitter.lua
+  grep -Fq 'treesitter.setup({' nvim/lua/plugins/treesitter.lua
   grep -Fq 'local ci_smoke = vim.env.DOTFILES_CI_SMOKE_NVIM == "1"' nvim/lua/plugins/treesitter.lua
-  grep -Fq 'ensure_installed = ci_smoke and {} or {' nvim/lua/plugins/treesitter.lua
-  grep -Fq "require('nvim-treesitter.install')" install.sh
-  grep -Fq 'install.ensure_installed_sync(languages)' install.sh
+  grep -Fq 'treesitter.install(languages)' nvim/lua/plugins/treesitter.lua
+  grep -Fq "require('nvim-treesitter')" install.sh
+  grep -Fq 'treesitter.install(languages):wait(300000)' install.sh
+  grep -Fq 'treesitter.update(languages):wait(300000)' install.sh
   grep -Fq "vim.cmd('cquit 1')" install.sh
-  ! grep -Fq "require('nvim-treesitter').install" install.sh
+  ! grep -Fq "require('nvim-treesitter.install')" install.sh
   grep -Fq "DOTFILES_CI_SMOKE_NVIM=1" scripts/verify-nvim.sh
   grep -Fq "nvim --headless -i NONE" scripts/verify-nvim.sh
   grep -Fq "plugin.has_errors(spec) then vim.cmd('cquit 1')" scripts/verify-nvim.sh

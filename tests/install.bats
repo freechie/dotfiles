@@ -24,19 +24,24 @@ MOCK
   cat > "$TEST_HOME/bin/npm" <<'MOCK'
 #!/bin/bash
 echo "Mock $0 $@"
-case " $* " in
-  *" tree-sitter-cli@0.25.10 "*)
-    mkdir -p "$HOME/.local/bin"
-    cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
-#!/bin/bash
-echo "tree-sitter 0.25.10"
-SCRIPT
-    chmod +x "$HOME/.local/bin/tree-sitter"
-    ;;
-esac
 exit 0
 MOCK
   chmod +x "$TEST_HOME/bin/npm"
+
+  cat > "$TEST_HOME/bin/cargo" <<'MOCK'
+#!/bin/bash
+echo "Mock $0 $@"
+if [[ " $* " == *" tree-sitter-cli "* ]]; then
+  mkdir -p "$HOME/.local/bin"
+  cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
+#!/bin/bash
+echo "tree-sitter 0.26.11"
+SCRIPT
+  chmod +x "$HOME/.local/bin/tree-sitter"
+fi
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/cargo"
 
   cat > "$TEST_HOME/bin/uname" <<'MOCK'
 #!/bin/bash
@@ -184,35 +189,35 @@ echo "tree-sitter 0.26.13"
 MOCK
   chmod +x "$TEST_HOME/bin/tree-sitter"
 
-  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+  cat > "$TEST_HOME/bin/cargo" <<'MOCK'
 #!/bin/bash
-printf '%s\n' "$*" > "$NPM_ARGS_FILE"
+printf '%s\n' "$*" > "$CARGO_ARGS_FILE"
 mkdir -p "$HOME/.local/bin"
 cat > "$HOME/.local/bin/tree-sitter" <<'BIN'
 #!/bin/bash
-echo "tree-sitter 0.25.10"
+echo "tree-sitter 0.26.11"
 BIN
 chmod +x "$HOME/.local/bin/tree-sitter"
 exit 0
 MOCK
-  chmod +x "$TEST_HOME/bin/npm"
+  chmod +x "$TEST_HOME/bin/cargo"
 
-  run env DOTFILES_PLATFORM=macos NPM_ARGS_FILE="$BATS_TEST_TMPDIR/npm.args" bash -c '
+  run env DOTFILES_PLATFORM=macos CARGO_ARGS_FILE="$BATS_TEST_TMPDIR/cargo.args" bash -c '
     source ./install.sh
     install_tree_sitter_cli
   '
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Installing tree-sitter-cli 0.25.10 via npm"* ]]
-  run cat "$BATS_TEST_TMPDIR/npm.args"
+  [[ "$output" == *"Installing tree-sitter-cli 0.26.11 via cargo"* ]]
+  run cat "$BATS_TEST_TMPDIR/cargo.args"
   [ "$status" -eq 0 ]
-  [ "$output" = "install -g --prefix $HOME/.local tree-sitter-cli@0.25.10" ]
+  [ "$output" = "install --locked --force --root $HOME/.local --version 0.26.11 tree-sitter-cli" ]
 }
 
 @test "installer keeps the pinned tree-sitter CLI" {
   cat > "$TEST_HOME/bin/tree-sitter" <<'MOCK'
 #!/bin/bash
-echo "tree-sitter 0.25.10"
+echo "tree-sitter 0.26.11"
 MOCK
   chmod +x "$TEST_HOME/bin/tree-sitter"
 
@@ -222,8 +227,8 @@ MOCK
   '
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"tree-sitter-cli 0.25.10 is already installed"* ]]
-  [[ "$output" != *"Mock $TEST_HOME/bin/npm"* ]]
+  [[ "$output" == *"tree-sitter-cli 0.26.11 is already installed"* ]]
+  [[ "$output" != *"Mock $TEST_HOME/bin/cargo"* ]]
 }
 
 @test "install.sh can force Neovim bootstrap in non-interactive CI" {
@@ -243,8 +248,8 @@ MOCK
   [[ "$output" == *"Mock nvim --headless +Lazy! restore"* ]]
   [[ "$output" == *"Bootstrapping Mason tooling..."* ]]
   [[ "$output" == *"Bootstrapping treesitter parsers..."* ]]
-  [[ "$output" == *"require('nvim-treesitter.install')"* ]]
-  [[ "$output" == *"ensure_installed_sync"* ]]
+  [[ "$output" == *"require('nvim-treesitter')"* ]]
+  [[ "$output" == *"treesitter.install(languages):wait(300000)"* ]]
   [[ "$output" == *"vim.cmd('cquit 1')"* ]]
   [[ "$output" != *"require('nvim-treesitter').install"* ]]
   [[ "$output" == *"Bootstrapping DevDocs offline docs..."* ]]
@@ -413,7 +418,7 @@ MOCK
   [[ "$output" == *"sudo apt-get update && sudo apt-get install -y git curl zsh tmux fzf ripgrep fd-find bat xclip build-essential zoxide eza zsh-autosuggestions zsh-syntax-highlighting python3 python3-venv python3-pip nodejs npm ruby-full golang-go clangd php-cli php-mbstring php-xml composer default-jdk luarocks locales texlive-latex-base"* ]]
   [[ "$output" == *"Install pinned Neovim release from upstream."* ]]
   [[ "$output" == *"Pinned Neovim 0.12.2 is installed separately from upstream into ~/.local."* ]]
-  [[ "$output" == *"tree-sitter-cli is installed separately via npm."* ]]
+  [[ "$output" == *"tree-sitter-cli is installed separately via Cargo."* ]]
 }
 
 @test "install.sh requires checksum for unpinned Linux Neovim override" {
@@ -530,7 +535,7 @@ MOCK
 
   run env HOME="$HOME" PATH="$TEST_HOME/bin" DOTFILES_PLATFORM=linux SHELL=/bin/bash /bin/bash ./install.sh --dry-run --skip-deps
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Skipping tree-sitter-cli install: npm not found."* ]]
+  [[ "$output" == *"Skipping tree-sitter-cli install: cargo not found."* ]]
   [[ "$output" == *"Skipping locale setup: locale-gen/update-locale not available."* ]]
   [[ "$output" == *"Skipping hunkdiff install: npm not found."* ]]
   [[ "$output" == *"Skipping Node.js Neovim host install: npm not found."* ]]

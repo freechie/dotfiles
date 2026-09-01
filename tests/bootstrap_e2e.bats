@@ -28,19 +28,24 @@ MOCK
   cat > "$TEST_HOME/bin/npm" <<'MOCK'
 #!/bin/bash
 echo "Mock $0 $@"
-case " $* " in
-  *" tree-sitter-cli@0.25.10 "*)
-    mkdir -p "$HOME/.local/bin"
-    cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
-#!/bin/bash
-echo "tree-sitter 0.25.10"
-SCRIPT
-    chmod +x "$HOME/.local/bin/tree-sitter"
-    ;;
-esac
 exit 0
 MOCK
   chmod +x "$TEST_HOME/bin/npm"
+
+  cat > "$TEST_HOME/bin/cargo" <<'MOCK'
+#!/bin/bash
+echo "Mock $0 $@"
+if [[ " $* " == *" tree-sitter-cli "* ]]; then
+  mkdir -p "$HOME/.local/bin"
+  cat > "$HOME/.local/bin/tree-sitter" <<'SCRIPT'
+#!/bin/bash
+echo "tree-sitter 0.26.11"
+SCRIPT
+  chmod +x "$HOME/.local/bin/tree-sitter"
+fi
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/cargo"
 
   cat << 'EOF' > "$TEST_HOME/bin/sudo"
 #!/bin/bash

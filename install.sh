@@ -172,7 +172,7 @@ print_linux_package_workaround() {
     echo "  sudo apt-get update && sudo apt-get install -y $apt_packages"
     echo "Pinned Neovim $DOTFILES_NEOVIM_LINUX_VERSION is installed separately from upstream into ~/.local."
     echo "Rustup is installed separately into ~/.cargo for Rust-based Neovim plugins."
-    echo "tree-sitter-cli is installed separately via npm."
+    echo "tree-sitter-cli is installed separately via Cargo."
     echo "If you are not on Ubuntu or Debian, install equivalent packages manually."
 }
 
@@ -602,9 +602,9 @@ install_rustup() {
 }
 
 install_tree_sitter_cli() {
-    local npm_prefix="$HOME/.local"
+    local cargo_root="$HOME/.local"
     local installed_version=""
-    local pinned_binary="$npm_prefix/bin/tree-sitter"
+    local pinned_binary="$cargo_root/bin/tree-sitter"
 
     if is_ci_smoke_install; then
         echo "Skipping tree-sitter-cli install: CI smoke mode."
@@ -620,8 +620,8 @@ install_tree_sitter_cli() {
         return 0
     fi
 
-    if ! command -v npm >/dev/null 2>&1; then
-        echo "Skipping tree-sitter-cli install: npm not found."
+    if ! command -v cargo >/dev/null 2>&1; then
+        echo "Skipping tree-sitter-cli install: cargo not found."
         return 0
     fi
 
@@ -629,14 +629,14 @@ install_tree_sitter_cli() {
         echo "Replacing incompatible tree-sitter-cli $installed_version."
     fi
 
-    echo "Installing tree-sitter-cli $DOTFILES_TREE_SITTER_CLI_VERSION via npm..."
+    echo "Installing tree-sitter-cli $DOTFILES_TREE_SITTER_CLI_VERSION via cargo..."
     if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: npm install -g --prefix $npm_prefix tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION"
+        echo "DRY RUN: cargo install --locked --force --root $cargo_root --version $DOTFILES_TREE_SITTER_CLI_VERSION tree-sitter-cli"
         return
     fi
 
-    mkdir -p "$npm_prefix"
-    npm install -g --prefix "$npm_prefix" "tree-sitter-cli@$DOTFILES_TREE_SITTER_CLI_VERSION"
+    mkdir -p "$cargo_root"
+    cargo install --locked --force --root "$cargo_root" --version "$DOTFILES_TREE_SITTER_CLI_VERSION" tree-sitter-cli
 
     if [[ ! -x "$pinned_binary" ]] || [[ "$("$pinned_binary" --version 2>/dev/null | awk '{ print $2 }')" != "$DOTFILES_TREE_SITTER_CLI_VERSION" ]]; then
         echo "tree-sitter-cli installation did not produce version $DOTFILES_TREE_SITTER_CLI_VERSION at $pinned_binary." >&2
@@ -1035,7 +1035,7 @@ bootstrap_neovim_environment() {
 
     lua_list="$(printf '"%s",' "${treesitter_languages[@]}")"
     lua_list="${lua_list%,}"
-    treesitter_lua="local languages = {${lua_list}}; local ok, err = pcall(function() local install = require('nvim-treesitter.install'); install.ensure_installed_sync(languages); install.update({ with_sync = true })(languages); local missing = {}; for _, language in ipairs(languages) do if #vim.api.nvim_get_runtime_file('parser/' .. language .. '.so', true) == 0 then table.insert(missing, language) end end; if #missing > 0 then error('missing Treesitter parsers: ' .. table.concat(missing, ', ')) end end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd('cquit 1') end"
+    treesitter_lua="local languages = {${lua_list}}; local ok, err = pcall(function() local treesitter = require('nvim-treesitter'); treesitter.install(languages):wait(300000); treesitter.update(languages):wait(300000); local missing = {}; for _, language in ipairs(languages) do if #vim.api.nvim_get_runtime_file('parser/' .. language .. '.so', true) == 0 then table.insert(missing, language) end end; if #missing > 0 then error('missing Treesitter parsers: ' .. table.concat(missing, ', ')) end end); if not ok then vim.api.nvim_err_writeln(err); vim.cmd('cquit 1') end"
 
     echo "Bootstrapping treesitter parsers..."
     run_nvim_bootstrap_step "Treesitter parser bootstrap" "+lua ${treesitter_lua}" +qa
