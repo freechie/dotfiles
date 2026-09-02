@@ -382,3 +382,21 @@ EOF
   [ "$status" -eq 0 ]
   [ ! -e "$treesitter_dir" ]
 }
+
+@test "installed neovim keeps a main-branch nvim-treesitter checkout" {
+  if ! command -v nvim >/dev/null 2>&1; then
+    skip "nvim is not installed"
+  fi
+
+  run install_for_platform macos Darwin
+  [ "$status" -eq 0 ]
+
+  prepare_lazy_stub
+  local treesitter_dir="$XDG_DATA_HOME/nvim/lazy/nvim-treesitter"
+  mkdir -p "$treesitter_dir/lua/nvim-treesitter"
+  printf '%s\n' 'return {}' > "$treesitter_dir/lua/nvim-treesitter/init.lua"
+
+  run env HOME="$HOME" DOTFILES_TEST_UNAME=Darwin DOTFILES_CI_SMOKE_NVIM=1 XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$XDG_DATA_HOME" nvim --headless '+quitall'
+  [ "$status" -eq 0 ]
+  [ -f "$treesitter_dir/lua/nvim-treesitter/init.lua" ]
+}

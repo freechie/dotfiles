@@ -33,6 +33,13 @@ if ci_lock_readonly then
 	end
 end
 
+local treesitter_dir = vim.fn.stdpath("data") .. "/lazy/nvim-treesitter"
+local master_module = uv.fs_stat(treesitter_dir .. "/lua/nvim-treesitter.lua")
+if master_module and master_module.type == "file" then
+	print("Removing stale nvim-treesitter master checkout")
+	vim.fn.delete(treesitter_dir, "rf")
+end
+
 -- Setup lazy.nvim with your plugins
 require("lazy").setup({
 	-- Define your plugins as a list of specs.

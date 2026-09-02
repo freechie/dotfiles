@@ -392,6 +392,8 @@
   grep -Fq "plugin.has_errors(spec) then vim.cmd('cquit 1')" install.sh
   grep -Fq 'DOTFILES_FORCE_NVIM_BOOTSTRAP' install.sh
   grep -Fq 'DOTFILES_CI_LOCK_READONLY' nvim/lua/core/lazy.lua
+  grep -Fq 'lua/nvim-treesitter.lua' nvim/lua/core/lazy.lua
+  grep -Fq 'vim.fn.delete(treesitter_dir, "rf")' nvim/lua/core/lazy.lua
   ! grep -Fq 'nvim --headless "+Lazy! sync" +qa' install.sh
 }
 
