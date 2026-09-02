@@ -1,3 +1,7 @@
+# The following lines were added by Docker Desktop to add commands to your PATH.
+export PATH="$PATH:/Users/what/.docker/bin"
+# End of Docker Desktop section.
+
 BASH_PROFILE_SOURCE="${BASH_SOURCE[0]}"
 while [ -L "$BASH_PROFILE_SOURCE" ]; do
     BASH_PROFILE_DIR="$(cd -P "$(dirname "$BASH_PROFILE_SOURCE")" && pwd)"

@@ -1,4 +1,3 @@
--- A helper function for creating keymaps for better readability
 local function map(mode, lhs, rhs, opts)
 	local options = { noremap = true, silent = true }
 	if opts then
@@ -7,7 +6,6 @@ local function map(mode, lhs, rhs, opts)
 	vim.keymap.set(mode, lhs, rhs, options)
 end
 
--- Basic Editor Mappings
 map("n", "<leader>w", "<cmd>w<cr>", { desc = "Save File" })
 map("n", "<leader>q", "<cmd>q<cr>", { desc = "Quit Window" })
 map("n", "<leader>Q", "<cmd>qa!<cr>", { desc = "Force Quit All" })
@@ -19,7 +17,6 @@ if vim.fn.exists(":restart") == 2 then
 	end, { desc = "Restart Neovim" })
 end
 
--- Clear search highlight
 map("n", "<leader><space>", "<cmd>nohlsearch<cr>", { desc = "Clear Search Highlight" })
 map("n", "<leader>uw", "<cmd>set wrap!<cr>", { desc = "Toggle [U]I [W]rap" })
 
@@ -29,21 +26,18 @@ map("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { desc = "[F]ind [H]elp T
 map("n", "<leader>fo", "<cmd>Telescope oldfiles<cr>", { desc = "[F]ind [O]ld Files" })
 map("n", "<leader>fd", "<cmd>Telescope diagnostics<cr>", { desc = "[F]ind [D]iagnostics" })
 
--- Formatting
 map("n", "<leader>cf", function()
 	require("conform").format({ async = true, lsp_format = "fallback" })
 end, { desc = "[C]ode [F]ormat" })
 
--- Diagnostic Keymaps
 map("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic message" })
 map("n", "]d", vim.diagnostic.goto_next, { desc = "Go to next diagnostic message" })
 map("n", "<leader>dd", vim.diagnostic.open_float, { desc = "Open floating diagnostic message" })
 
--- Quickfix Navigation
 map("n", "]q", "<cmd>cnext<cr>", { desc = "Next Quickfix Item" })
 map("n", "[q", "<cmd>cprev<cr>", { desc = "Previous Quickfix Item" })
 map("n", "]Q", "<cmd>clast<cr>", { desc = "Last Quickfix Item" })
 map("n", "[Q", "<cmd>cfirst<cr>", { desc = "First Quickfix Item" })
 
--- Convenience Commands (Allow lowercase :lazy)
+-- Lowercase :lazy opens Lazy
 vim.cmd("cnoreabbrev <expr> lazy getcmdtype() == ':' && getcmdline() == 'lazy' ? 'Lazy' : 'lazy'")

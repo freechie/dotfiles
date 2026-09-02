@@ -1,15 +1,11 @@
 return {
-	-- Indentation guides
 	{ "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {} },
-
-	-- Startup dashboard
 	{
 		"goolord/alpha-nvim",
 		event = "VimEnter",
 		opts = function()
 			local dashboard = require("alpha.themes.dashboard")
 
-			-- sleek, slant style header
 			dashboard.section.header.val = {
 				[[    _   __                _         ]],
 				[[   / | / /__  ____ _   __(_)___ ___ ]],
@@ -18,7 +14,6 @@ return {
 				[[/_/ |_/\___/\____/|___/_/_/ /_/ /_/ ]],
 			}
 
-			-- Minimal, clean buttons
 			dashboard.section.buttons.val = {
 				dashboard.button("f", "  Find File", ":Telescope find_files <CR>"),
 				dashboard.button("n", "  New File", ":enew <CR>"),
@@ -30,7 +25,6 @@ return {
 				dashboard.button("q", "  Quit", ":qa <CR>"),
 			}
 
-			-- Remove footer for a cleaner look
 			dashboard.section.footer.val = ""
 
 			return dashboard.opts

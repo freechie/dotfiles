@@ -1,8 +1,6 @@
--- lua/plugins/formatter.lua
-
 return {
 	"stevearc/conform.nvim",
-	event = { "BufWritePre" }, -- Run formatter before saving
+	event = { "BufWritePre" },
 	cmd = { "ConformInfo" },
 	config = function()
 		local function project_root(filename)
@@ -26,7 +24,6 @@ return {
 		end
 
 		require("conform").setup({
-			-- Configure formatters for different file types
 			formatters_by_ft = {
 				lua = { "stylua" },
 				python = { "isort", "black" },
@@ -62,7 +59,6 @@ return {
 					end,
 				},
 			},
-			-- Optional: Run formatter automatically on save
 			format_on_save = {
 				timeout_ms = 2000,
 				lsp_format = "fallback",

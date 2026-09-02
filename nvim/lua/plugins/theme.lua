@@ -1,11 +1,8 @@
--- lua/plugins/theme.lua
-
 return {
-	-- Theme: Kanagawa
 	{
 		"rebelot/kanagawa.nvim",
-		lazy = false, -- Load theme on startup
-		priority = 1000, -- Make sure it loads first
+		lazy = false,
+		priority = 1000,
 		config = function()
 			require("kanagawa").setup({
 				compile = true,
@@ -22,7 +19,6 @@ return {
 		end,
 	},
 
-	-- Automatic Theme Switching based on macOS Dark Mode
 	{
 		"cormacrelf/dark-notify",
 		cond = function()

@@ -1,5 +1,3 @@
--- lua/core/lazy.lua
-
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 local uv = vim.uv or vim.loop
 
@@ -11,7 +9,7 @@ if not uv.fs_stat(lazypath) then
 		"--depth=1",
 		"--filter=blob:none",
 		"https://github.com/folke/lazy.nvim.git",
-		"--branch=stable", -- latest stable release
+		"--branch=stable",
 		lazypath,
 	})
 
@@ -40,10 +38,7 @@ if master_module and master_module.type == "file" then
 	vim.fn.delete(treesitter_dir, "rf")
 end
 
--- Setup lazy.nvim with your plugins
 require("lazy").setup({
-	-- Define your plugins as a list of specs.
-	-- lazy.nvim will automatically load files from the `lua/plugins/` directory.
 	{ import = "plugins" },
 }, {
 	install = { missing = not ci_smoke_nvim },

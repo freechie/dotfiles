@@ -1,5 +1,3 @@
--- lua/plugins/dap.lua
-
 return {
 	{
 		"mfussenegger/nvim-dap",
@@ -8,26 +6,18 @@ return {
 			"jay-babu/mason-nvim-dap.nvim",
 			"rcarriga/nvim-dap-ui",
 			"nvim-neotest/nvim-nio",
-			"theHamsta/nvim-dap-virtual-text", -- Inline variable values
+			"theHamsta/nvim-dap-virtual-text",
 		},
 		config = function()
 			local dap = require("dap")
 			local dapui = require("dapui")
 
-			-- 1. SETUP MASON-DAP
 			require("mason-nvim-dap").setup({
-				-- Ensure these are installed
 				ensure_installed = { "python", "delve", "codelldb" },
-
-				-- HANDLERS: This is where we fix the path issues
 				handlers = {
-					-- Default handler for things like Python
 					function(config)
 						require("mason-nvim-dap").default_setup(config)
 					end,
-
-					-- Specific handler for C/C++/Rust (CodeLLDB)
-					-- We explicitly point to the executable to fix the health check error
 					codelldb = function(config)
 						config.adapters = {
 							type = "server",
@@ -39,8 +29,6 @@ return {
 						}
 						require("mason-nvim-dap").default_setup(config)
 					end,
-
-					-- Specific handler for Go (Delve)
 					delve = function(config)
 						config.adapters = {
 							type = "server",
@@ -55,10 +43,7 @@ return {
 				},
 			})
 
-			-- 2. SETUP VIRTUAL TEXT
 			require("nvim-dap-virtual-text").setup({})
-
-			-- 3. SETUP UI
 			dapui.setup({
 				layouts = {
 					{
@@ -93,7 +78,6 @@ return {
 				},
 			})
 
-			-- Auto-open/close UI listeners
 			dap.listeners.after.event_initialized["dapui_config"] = function()
 				dapui.open()
 			end
@@ -104,7 +88,6 @@ return {
 				dapui.close()
 			end
 
-			-- 4. KEYBINDINGS
 			vim.keymap.set("n", "<F5>", dap.continue, { desc = "DAP: Continue" })
 			vim.keymap.set("n", "<F6>", function()
 				require("dap").terminate()

@@ -1,10 +1,7 @@
--- lua/plugins/nvim-tree.lua
-
 return {
 	{
 		"nvim-tree/nvim-tree.lua",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
-		-- Keymaps are defined here so Lazy can manage them
 		keys = {
 			{
 				"<leader>e",
@@ -13,7 +10,6 @@ return {
 			},
 		},
 		opts = {
-			-- You can add your nvim-tree options here
 			sort_by = "case_sensitive",
 			view = {
 				width = 30,

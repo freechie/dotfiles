@@ -16,3 +16,9 @@
   [ "$status" -eq 1 ]
   [ -z "$output" ]
 }
+
+@test "reachable git history has no Cursor agent attribution" {
+  run git log --format=%B
+  [ "$status" -eq 0 ]
+  ! [[ "$output" == *"cursoragent@cursor.com"* ]]
+}
