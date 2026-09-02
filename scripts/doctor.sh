@@ -56,6 +56,7 @@ expected_link_target() {
         ".tmux.conf") printf '%s\n' "$repo_root/.tmux.conf" ;;
         ".config/nvim") printf '%s\n' "$repo_root/nvim" ;;
         ".config/starship.toml") printf '%s\n' "$repo_root/platforms/$platform_dir/starship.toml" ;;
+        ".spacemacs") printf '%s\n' "$repo_root/emacs/.spacemacs" ;;
         *) return 1 ;;
     esac
 }
@@ -201,6 +202,27 @@ check_lldb() {
     fi
 }
 
+check_emacs_app() {
+    local prefix
+
+    if ! dotfiles_is_macos; then
+        return
+    fi
+
+    if [[ -x /Applications/Emacs.app/Contents/MacOS/Emacs ]]; then
+        pass "Emacs.app is installed in /Applications"
+        return
+    fi
+
+    if command -v brew >/dev/null 2>&1; then
+        prefix="$(brew --prefix "${DOTFILES_EMACS_PLUS_FORMULA:-emacs-plus@31}" 2>/dev/null || true)"
+        if [[ -n "$prefix" && -d "$prefix/Emacs.app" ]]; then
+            warn "emacs-plus is installed but /Applications/Emacs.app is missing; rerun ./install.sh or copy Emacs.app from $prefix"
+            return
+        fi
+    fi
+}
+
 verify_nvim_contract() {
     if [[ "$run_nvim_verify" -ne 1 ]]; then
         return
@@ -245,6 +267,7 @@ check_locale
 check_default_shell
 check_zsh_completion_permissions
 check_lldb
+check_emacs_app
 verify_nvim_contract
 
 printf 'Doctor summary: %s failure(s), %s warning(s)\n' "$failures" "$warnings"

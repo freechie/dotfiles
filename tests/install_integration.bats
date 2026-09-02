@@ -224,6 +224,8 @@ EOF
   [[ "$(readlink "$HOME/.gitconfig")" == "$dir/.gitconfig" ]]
   [ -L "$HOME/.gitignore_global" ]
   [[ "$(readlink "$HOME/.gitignore_global")" == "$dir/.gitignore_global" ]]
+  [ -L "$HOME/.spacemacs" ]
+  [[ "$(readlink "$HOME/.spacemacs")" == "$dir/emacs/.spacemacs" ]]
   [ -L "$HOME/Library/Application Support/com.mitchellh.ghostty/config" ]
   [[ "$(readlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config")" == "$dir/ghostty/config.macos" ]]
 }
@@ -367,6 +369,8 @@ EOF
   [[ "$(readlink "$HOME/.bash_profile")" == "$dir/platforms/ubuntu/.bash_profile" ]]
   [ -L "$HOME/.config/starship.toml" ]
   [[ "$(readlink "$HOME/.config/starship.toml")" == "$dir/platforms/ubuntu/starship.toml" ]]
+  [ -L "$HOME/.spacemacs" ]
+  [[ "$(readlink "$HOME/.spacemacs")" == "$dir/emacs/.spacemacs" ]]
 }
 
 @test "install.sh backs up existing .config files correctly" {

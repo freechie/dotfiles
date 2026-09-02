@@ -83,12 +83,17 @@ DOTFILES_DEVDOCS_ENTRIES=(
     typescript
 )
 
+DOTFILES_SPACEMACS_REPO="https://github.com/syl20bnr/spacemacs.git"
+DOTFILES_SPACEMACS_BRANCH="develop"
+DOTFILES_EMACS_PLUS_FORMULA="emacs-plus@31"
+
 DOTFILES_VERIFY_LINKS_COMMON=(
     ".zshrc"
     ".bash_profile"
     ".tmux.conf"
     ".config/nvim"
     ".config/starship.toml"
+    ".spacemacs"
 )
 
 dotfiles_join_by() {

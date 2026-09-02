@@ -160,6 +160,7 @@ case "$platform" in
         assert_link "$HOME/.zshrc" "$repo_root/platforms/ubuntu/.zshrc"
         assert_link "$HOME/.bash_profile" "$repo_root/platforms/ubuntu/.bash_profile"
         assert_link "$HOME/.config/starship.toml" "$repo_root/platforms/ubuntu/starship.toml"
+        assert_link "$HOME/.spacemacs" "$repo_root/emacs/.spacemacs"
 
         assert_core_tools
         if [[ "$mode" == "full" ]]; then
@@ -187,6 +188,7 @@ case "$platform" in
         assert_link "$HOME/.zshrc" "$repo_root/platforms/macos/.zshrc"
         assert_link "$HOME/.bash_profile" "$repo_root/platforms/macos/.bash_profile"
         assert_link "$HOME/.config/starship.toml" "$repo_root/platforms/macos/starship.toml"
+        assert_link "$HOME/.spacemacs" "$repo_root/emacs/.spacemacs"
 
         assert_core_tools
         command -v brew

@@ -47,6 +47,7 @@
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"
+    "emacs/.spacemacs"
   )
 
   for f in "${expected[@]}"; do
@@ -77,6 +78,8 @@
   ! grep -q '^cask "unnaturalscrollwheels"$' Brewfile
   ! grep -q '^cask "visual-studio-code"$' Brewfile
   ! grep -q '^vscode ' Brewfile
+  ! grep -q '^tap "d12frosted/emacs-plus"$' Brewfile
+  ! grep -q 'emacs-plus' Brewfile
   grep -q '^brew "ffmpeg"$' Brewfile
 }
 
@@ -85,6 +88,8 @@
 
   grep -q '^tap "cormacrelf/tap"$' Brewfile.personal-macos
   grep -q '^brew "cormacrelf/tap/dark-notify"$' Brewfile.personal-macos
+  grep -q '^tap "d12frosted/emacs-plus"$' Brewfile.personal-macos
+  grep -q '^brew "d12frosted/emacs-plus/emacs-plus@31"$' Brewfile.personal-macos
   ! grep -q '^cask "karabiner-elements"$' Brewfile.personal-macos
   grep -q '^cask "unnaturalscrollwheels"$' Brewfile.personal-macos
 
@@ -375,6 +380,7 @@
   grep -Fq 'git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$omz_dir"' install.sh
   grep -Fq 'git clone --depth=1 "$repo_url" "$plugin_dir"' install.sh
   grep -Fq 'git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"' install.sh
+  grep -Fq 'git clone --depth=1 --branch "$DOTFILES_SPACEMACS_BRANCH"' install.sh
   grep -Fq '"--depth=1",' nvim/lua/core/lazy.lua
 }
 

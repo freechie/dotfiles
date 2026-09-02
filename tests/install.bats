@@ -173,6 +173,7 @@ MOCK
   [[ "$output" == *"Skipping tree-sitter-cli install: CI smoke mode."* ]]
   [[ "$output" == *"Skipping locale setup: CI smoke mode."* ]]
   [[ "$output" == *"Skipping Oh My Zsh extras install: CI smoke mode."* ]]
+  [[ "$output" == *"Skipping Spacemacs clone: CI smoke mode."* ]]
   [[ "$output" == *"Skipping hunkdiff install: CI smoke mode."* ]]
   [[ "$output" == *"Skipping Node.js Neovim host install: CI smoke mode."* ]]
   [[ "$output" == *"Skipping Ruby Neovim host install: CI smoke mode."* ]]
@@ -367,6 +368,13 @@ MOCK
   [[ "$output" != *"curl should not run with --skip-deps"* ]]
 }
 
+@test "install.sh does not copy Emacs.app from an isolated HOME" {
+  run env DOTFILES_PLATFORM=macos bash -c 'printf "y\n" | ./install.sh --skip-deps'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Skipping Emacs.app copy: not running against the operator home."* ]]
+  [[ "$output" == *"Skipping emacs-plus PATH link: not running against the operator home."* ]]
+}
+
 @test "verified downloads retry transient failures" {
   cat > "$TEST_HOME/bin/curl" <<'MOCK'
 #!/bin/bash
@@ -508,6 +516,7 @@ MOCK
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"
+    "emacs/.spacemacs"
   )
 
   for f in "${expected[@]}"; do

@@ -10,7 +10,7 @@ make_mock_repo() {
   local repo="$1"
   local platform_dir="$2"
   local bin_dir="${3:-}"
-  mkdir -p "$repo/scripts" "$repo/platforms/ubuntu" "$repo/platforms/macos"
+  mkdir -p "$repo/scripts" "$repo/platforms/ubuntu" "$repo/platforms/macos" "$repo/emacs"
 
   cp "$BATS_TEST_DIRNAME/../scripts/ci-smoke-install.sh" "$repo/scripts/ci-smoke-install.sh"
 
@@ -20,6 +20,7 @@ make_mock_repo() {
   : > "$repo/platforms/macos/.zshrc"
   : > "$repo/platforms/macos/.bash_profile"
   : > "$repo/platforms/macos/starship.toml"
+  : > "$repo/emacs/.spacemacs"
 
   cat > "$repo/install.sh" <<EOF
 #!/usr/bin/env bash
@@ -38,6 +39,7 @@ mkdir -p "$HOME/.config"
 ln -snf "$repo/platforms/$platform_dir/.zshrc" "$HOME/.zshrc"
 ln -snf "$repo/platforms/$platform_dir/.bash_profile" "$HOME/.bash_profile"
 ln -snf "$repo/platforms/$platform_dir/starship.toml" "$HOME/.config/starship.toml"
+ln -snf "$repo/emacs/.spacemacs" "$HOME/.spacemacs"
 ln -snf "$repo/.tmux.conf" "$HOME/.tmux.conf"
 touch "$repo/.tmux.conf"
 if [ -n "$bin_dir" ]; then
@@ -135,6 +137,7 @@ EOF
   [ "$(readlink "$HOME/.zshrc")" = "$repo/platforms/ubuntu/.zshrc" ]
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/ubuntu/.bash_profile" ]
   [ "$(readlink "$HOME/.config/starship.toml")" = "$repo/platforms/ubuntu/starship.toml" ]
+  [ "$(readlink "$HOME/.spacemacs")" = "$repo/emacs/.spacemacs" ]
 
   run cat "$bin_dir/git.log"
   [ "$status" -eq 0 ]
@@ -192,6 +195,7 @@ EOF
   [ "$(readlink "$HOME/.zshrc")" = "$repo/platforms/macos/.zshrc" ]
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/macos/.bash_profile" ]
   [ "$(readlink "$HOME/.config/starship.toml")" = "$repo/platforms/macos/starship.toml" ]
+  [ "$(readlink "$HOME/.spacemacs")" = "$repo/emacs/.spacemacs" ]
 }
 
 @test "ci smoke install runs macOS full then skip-deps" {

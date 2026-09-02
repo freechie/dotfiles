@@ -52,11 +52,14 @@ brew bundle --file=Brewfile.heavy
 ```
 
 The personal macOS profile includes a third-party tap and requires explicit
-trust before installing `dark-notify`:
+trust before installing `dark-notify`. It also installs GUI Emacs via
+`emacs-plus@31`. Do not put emacs-plus in the core `Brewfile`; the formula
+compiles from source.
 
 ```bash
 brew tap cormacrelf/tap
 brew trust --formula cormacrelf/tap/dark-notify
+brew tap d12frosted/emacs-plus
 brew bundle --file=Brewfile.personal-macos
 ```
 
@@ -65,9 +68,16 @@ brew bundle --file=Brewfile.personal-macos
 - Shell: `.zshrc`, `.bash_profile`, shared modules in `shell/`
 - tmux: `.tmux.conf`, platform overrides in `tmux/`
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
+- Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`; `~/.emacs.d` is a clone of develop)
 - Ghostty: platform configs in `ghostty/`
 - Starship: platform configs under `platforms/`
 - Git: `.gitconfig`, `.gitignore_global`
+
+`~/.emacs.d` is a clone of Spacemacs `develop`, not a symlink into this repo.
+On macOS, Spotlight ignores `Emacs.app` symlinks (`brew linkapps` is gone).
+When `emacs-plus@31` is installed and `./install.sh` runs against your real
+home, it copies `Emacs.app` into `/Applications` and unlinks Homebrew core
+`emacs` so `emacs` on PATH is the Cocoa build.
 
 `config/toolchain.sh` is the source of truth for package lists, minimum tool
 versions, pinned installer URLs, and SHA256 checksums.
@@ -121,6 +131,7 @@ SHA256 together in `config/toolchain.sh`.
 - `<Leader>e`: toggle file explorer
 - `<Leader>gg`: open LazyGit
 - `<Leader>cf`: format current buffer
+- `SPC`: Spacemacs leader key
 - `update`: platform-specific system update helper
 - `bbu`: write ignored Homebrew snapshot
 

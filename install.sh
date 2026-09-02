@@ -224,6 +224,8 @@ confirm_proceed() {
     ((step++))
     echo "$step. Install Tmux Plugin Manager (TPM)."
     ((step++))
+    echo "$step. Install Spacemacs and copy Emacs.app into /Applications when emacs-plus is present."
+    ((step++))
     echo "$step. Bootstrap Neovim plugins, parsers, and Mason tooling."
     echo "--------------------------------------------------"
 
@@ -868,6 +870,130 @@ install_tpm() {
     run_cmd git clone --depth=1 https://github.com/tmux-plugins/tpm "$tpm_dir"
 }
 
+is_operator_home() {
+    local user home
+    user="$(id -un)"
+    eval "home=~${user}"
+    [[ "$HOME" == "$home" ]]
+}
+
+emacs_plus_prefix() {
+    local formula="${DOTFILES_EMACS_PLUS_FORMULA:-emacs-plus@31}"
+
+    if ! command -v brew >/dev/null 2>&1; then
+        return 1
+    fi
+
+    brew --prefix "$formula" 2>/dev/null
+}
+
+install_spacemacs() {
+    local emacs_d="$HOME/.emacs.d"
+
+    if is_ci_smoke_install; then
+        echo "Skipping Spacemacs clone: CI smoke mode."
+        return
+    fi
+
+    if [[ -d "$emacs_d/.git" ]]; then
+        echo "Spacemacs is already installed."
+        return
+    fi
+
+    if [[ -e "$emacs_d" ]]; then
+        echo "Skipping Spacemacs clone: $emacs_d already exists."
+        return
+    fi
+
+    echo "Installing Spacemacs..."
+    run_cmd git clone --depth=1 --branch "$DOTFILES_SPACEMACS_BRANCH" \
+        "$DOTFILES_SPACEMACS_REPO" "$emacs_d"
+}
+
+prefer_emacs_plus_on_path() {
+    local formula="${DOTFILES_EMACS_PLUS_FORMULA:-emacs-plus@31}"
+    local prefix
+
+    if ! dotfiles_is_macos; then
+        return
+    fi
+
+    if [[ -z "$DRY_RUN" ]] && ! is_operator_home; then
+        echo "Skipping emacs-plus PATH link: not running against the operator home."
+        return
+    fi
+
+    prefix="$(emacs_plus_prefix || true)"
+    if [[ -z "$prefix" || ! -x "$prefix/bin/emacs" ]]; then
+        echo "Skipping emacs-plus PATH link: $formula is not installed."
+        return
+    fi
+
+    if command -v brew >/dev/null 2>&1 && brew list --formula emacs >/dev/null 2>&1; then
+        echo "Unlinking Homebrew core emacs so emacs-plus owns PATH."
+        run_cmd brew unlink emacs
+    fi
+
+    echo "Linking $formula onto PATH."
+    run_cmd brew link --overwrite "$formula"
+}
+
+install_macos_emacs_app() {
+    local prefix dest client_src client_dest formula="${DOTFILES_EMACS_PLUS_FORMULA:-emacs-plus@31}"
+
+    if ! dotfiles_is_macos; then
+        return
+    fi
+
+    if [[ -z "$DRY_RUN" ]] && ! is_operator_home; then
+        echo "Skipping Emacs.app copy: not running against the operator home."
+        return
+    fi
+
+    if is_ci_smoke_install; then
+        echo "Skipping Emacs.app copy: CI smoke mode."
+        return
+    fi
+
+    prefix="$(emacs_plus_prefix || true)"
+    dest="/Applications/Emacs.app"
+    client_src="$prefix/Emacs Client.app"
+    client_dest="/Applications/Emacs Client.app"
+
+    if [[ -z "$prefix" || ! -d "$prefix/Emacs.app" ]]; then
+        echo "Skipping Emacs.app copy: $formula is not installed."
+        echo "Install it with: brew tap d12frosted/emacs-plus && brew install $formula"
+        return
+    fi
+
+    if [[ -L "$dest" ]]; then
+        echo "Replacing Emacs.app symlink in /Applications with a real app bundle."
+        run_cmd rm -f "$dest"
+    fi
+
+    if [[ -d "$dest" && ! -L "$dest" ]]; then
+        echo "Emacs.app is already installed in /Applications."
+    else
+        echo "Copying Emacs.app into /Applications (symlinks are ignored by Spotlight)."
+        run_cmd cp -R "$prefix/Emacs.app" "$dest"
+    fi
+
+    if [[ ! -d "$client_src" ]]; then
+        return
+    fi
+
+    if [[ -L "$client_dest" ]]; then
+        run_cmd rm -f "$client_dest"
+    fi
+
+    if [[ -d "$client_dest" && ! -L "$client_dest" ]]; then
+        echo "Emacs Client.app is already installed in /Applications."
+    else
+        echo "Copying Emacs Client.app into /Applications."
+        run_cmd cp -R "$client_src" "$client_dest"
+    fi
+}
+
 add_link_spec() {
     link_specs+=("$1|$2|$3")
 }
@@ -921,6 +1047,7 @@ build_link_specs() {
         ".gitignore_global|$HOME/.gitignore_global|.gitignore_global in home directory"
         "nvim|$HOME/.config/nvim|nvim in ~/.config directory"
         "$platform_dir/starship.toml|$HOME/.config/starship.toml|starship.toml in ~/.config directory"
+        "emacs/.spacemacs|$HOME/.spacemacs|.spacemacs in home directory"
     )
 
     local ghostty_target
@@ -1071,6 +1198,9 @@ main() {
     run_deferred_error_step "Node.js Neovim host install" install_node_neovim_host
     run_deferred_error_step "Ruby Neovim host install" install_ruby_neovim_host
     run_deferred_error_step "Tmux Plugin Manager install" install_tpm
+    run_deferred_error_step "Spacemacs install" install_spacemacs
+    run_deferred_error_step "emacs-plus PATH link" prefer_emacs_plus_on_path
+    run_deferred_error_step "Emacs.app copy" install_macos_emacs_app
     run_deferred_error_step "Python Neovim provider install" install_pynvim_provider
     bootstrap_neovim_environment
 
