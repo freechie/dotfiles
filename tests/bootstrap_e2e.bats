@@ -364,3 +364,21 @@ EOF
   [[ "$output" == *"checker_enabled=true"* ]]
   [[ "$output" != *"lock_update=true"* ]]
 }
+
+@test "installed neovim removes a stale nvim-treesitter master checkout" {
+  if ! command -v nvim >/dev/null 2>&1; then
+    skip "nvim is not installed"
+  fi
+
+  run install_for_platform macos Darwin
+  [ "$status" -eq 0 ]
+
+  prepare_lazy_stub
+  local treesitter_dir="$XDG_DATA_HOME/nvim/lazy/nvim-treesitter"
+  mkdir -p "$treesitter_dir/lua"
+  printf '%s\n' 'return { setup = function() end }' > "$treesitter_dir/lua/nvim-treesitter.lua"
+
+  run env HOME="$HOME" DOTFILES_TEST_UNAME=Darwin DOTFILES_CI_SMOKE_NVIM=1 XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$XDG_DATA_HOME" nvim --headless '+quitall'
+  [ "$status" -eq 0 ]
+  [ ! -e "$treesitter_dir" ]
+}
