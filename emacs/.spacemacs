@@ -52,6 +52,7 @@ This function should only modify configuration layer settings."
      ;;        shell-default-position 'bottom)
      ;; spell-checking
      ;; syntax-checking
+     themes-megapack
      ;; version-control
      treemacs)
 
@@ -64,7 +65,7 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(auto-dark)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -578,7 +579,11 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  )
+  (use-package auto-dark
+    :init (spacemacs/defer-until-after-user-config #'auto-dark-mode)
+    :config
+    (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light)))
+    :defer t))
 
 
 ;; Do not write anything past this comment. This is where Emacs will
