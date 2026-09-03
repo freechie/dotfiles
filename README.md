@@ -1,5 +1,38 @@
 # Dotfiles
 
+![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white)
+![Zsh](https://img.shields.io/badge/Zsh-F15A24?logo=gnubash&logoColor=white)
+![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnubash&logoColor=white)
+![tmux](https://img.shields.io/badge/tmux-1BB91F?logo=tmux&logoColor=white)
+![Neovim](https://img.shields.io/badge/Neovim-57A143?logo=neovim&logoColor=white)
+![Spacemacs](https://img.shields.io/badge/Spacemacs-9266CC?logo=emacs&logoColor=white)
+![Emacs](https://img.shields.io/badge/Emacs-7F5AB6?logo=gnuemacs&logoColor=white)
+![Ghostty](https://img.shields.io/badge/Ghostty-2E2E2E?logo=ghost&logoColor=white)
+![Starship](https://img.shields.io/badge/Starship-DD0B64?logo=starship&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white)
+![Homebrew](https://img.shields.io/badge/Homebrew-FBB040?logo=homebrew&logoColor=black)
+![apt](https://img.shields.io/badge/apt-A80030?logo=debian&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white)
+![Bats](https://img.shields.io/badge/Bats-1D4ED8)
+![fzf](https://img.shields.io/badge/fzf-000000)
+![ripgrep](https://img.shields.io/badge/ripgrep-A8B9CC)
+![fd](https://img.shields.io/badge/fd-0F766E)
+![eza](https://img.shields.io/badge/eza-87FFAF)
+![zoxide](https://img.shields.io/badge/zoxide-5B21B6)
+![Lazy.nvim](https://img.shields.io/badge/Lazy.nvim-457B9D)
+![Mason](https://img.shields.io/badge/Mason-1D4ED8)
+![Lua](https://img.shields.io/badge/Lua-2C2D72?logo=lua&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)
+![Ruby](https://img.shields.io/badge/Ruby-CC342D?logo=ruby&logoColor=white)
+![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?logo=php&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)
+![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=white)
+![LazyGit](https://img.shields.io/badge/LazyGit-0A60C8)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+
 Terminal-focused dotfiles for macOS and Ubuntu/Linux. Includes Zsh, Bash,
 tmux, Neovim, Ghostty, Starship, Git config, installer scripts, and CI checks.
 

@@ -3,7 +3,7 @@ add_newline = false
 scan_timeout = 100
 command_timeout = 250
 
-format = "$username@$hostname:$directory$python$direnv$git_branch$git_status$status$jobs$cmd_duration$character"
+format = "$username@$custom:$directory$python$direnv$git_branch$git_status$status$jobs$cmd_duration$character"
 
 [username]
 format = "[$user]($style)"
@@ -12,14 +12,18 @@ style_root = "red"
 show_always = true
 
 [hostname]
-format = "[$hostname]($style)"
+disabled = true
+
+[custom.host]
+command = "hostname | cut -d. -f1 | cut -c1-3"
+when = true
 style = "cyan"
-ssh_only = false
+format = "[$output]($style)"
 
 [directory]
-format = "[$path]($style)"
+format = "[$path/]($style)"
 style = "141"
-truncation_length = 2
+truncation_length = 1
 truncation_symbol = "…/"
 truncate_to_repo = false
 home_symbol = "~"
