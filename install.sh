@@ -710,6 +710,35 @@ install_zsh_extras() {
         install_omz_plugin "fzf-tab" "https://github.com/Aloxaf/fzf-tab"
 }
 
+repair_homebrew_node_linkage() {
+    if is_ci_smoke_install; then
+        return 0
+    fi
+
+    if ! command -v brew >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if ! brew list --formula merve >/dev/null 2>&1 && ! brew list --formula node >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if command -v npm >/dev/null 2>&1 && npm -v >/dev/null 2>&1; then
+        return 0
+    fi
+
+    echo "npm is not runnable; reinstalling Homebrew merve and node for the current simdutf library."
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: brew reinstall merve node"
+        return 0
+    fi
+
+    (
+        unset HOMEBREW_NO_AUTO_UPDATE HOMEBREW_NO_INSTALL_UPGRADE
+        brew reinstall merve node
+    )
+}
+
 install_hunkdiff() {
     local npm_prefix="$HOME/.local"
 
@@ -1194,6 +1223,7 @@ main() {
     run_deferred_error_step "tree-sitter-cli install" install_tree_sitter_cli
     ensure_utf8_locale_linux
     install_zsh_extras
+    run_deferred_error_step "Homebrew node linkage repair" repair_homebrew_node_linkage
     run_deferred_error_step "hunkdiff install" install_hunkdiff
     run_deferred_error_step "Node.js Neovim host install" install_node_neovim_host
     run_deferred_error_step "Ruby Neovim host install" install_ruby_neovim_host

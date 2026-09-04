@@ -551,6 +551,20 @@ MOCK
   [[ "$output" == *"Skipping Ruby Neovim host install: ruby/gem not found."* ]]
 }
 
+@test "installer reinstalls merve and node when npm cannot start" {
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "broken npm" >&2
+exit 134
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" DOTFILES_PLATFORM=macos bash -c 'printf "y\n" | ./install.sh --skip-deps'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"npm is not runnable; reinstalling Homebrew merve and node for the current simdutf library."* ]]
+  [[ "$output" == *"reinstall merve node"* ]]
+}
+
 @test "install.sh is idempotent" {
   # First run
   run env DOTFILES_PLATFORM=macos bash -c 'echo "y" | ./install.sh'

@@ -103,14 +103,6 @@ prepare_macos_homebrew_ci() {
     fi
 
     untap_homebrew_tap_if_present "aws/tap"
-
-    # The Homebrew cache may contain bottles linked against an older simdutf
-    # dylib than the runner image ships.  `node` (via merve/simdutf) is the
-    # most common victim — npm aborts with a dyld "Library not loaded" error.
-    # A quick reinstall re-links against the current simdutf on disk.
-    if brew list node &>/dev/null; then
-        brew reinstall --quiet node || true
-    fi
 }
 
 untap_homebrew_tap_if_present() {
