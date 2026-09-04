@@ -164,6 +164,29 @@ MOCK
   [[ "$output" != *"curl should not run during dry-run"* ]]
 }
 
+@test "dry-run does not let brew or npm write under HOME" {
+  cat > "$TEST_HOME/bin/brew" <<'MOCK'
+#!/bin/bash
+mkdir -p "$HOME/Library/Caches/Homebrew"
+printf '%s\n' "$*" >> "$HOME/Library/Caches/Homebrew/invoked"
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/brew"
+
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+mkdir -p "$HOME/.npm"
+printf '%s\n' "$*" >> "$HOME/.npm/invoked"
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" DOTFILES_PLATFORM=macos /bin/bash ./install.sh --dry-run
+  [ "$status" -eq 0 ]
+  [ ! -e "$HOME/Library/Caches/Homebrew/invoked" ]
+  [ ! -e "$HOME/.npm/invoked" ]
+}
+
 @test "install.sh CI smoke mode skips optional network bootstrap" {
   run env DOTFILES_PLATFORM=linux DOTFILES_CI_SMOKE_INSTALL=1 bash -c 'printf "y\n" | ./install.sh --skip-deps'
   [ "$status" -eq 0 ]

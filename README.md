@@ -103,7 +103,7 @@ brew bundle --file=Brewfile.personal-macos
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
 - Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`; `~/.emacs.d` is a clone of develop)
 - Ghostty: platform configs in `ghostty/`
-- Starship: platform configs under `platforms/`
+- Starship: `starship.toml` (platform paths under `platforms/` are symlinks to it)
 - Git: `.gitconfig`, `.gitignore_global`
 
 `~/.emacs.d` is a clone of Spacemacs `develop`, not a symlink into this repo.

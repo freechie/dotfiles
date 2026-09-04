@@ -184,6 +184,27 @@ is_ci_smoke_install() {
     [[ "${DOTFILES_CI_SMOKE_INSTALL:-}" == "1" ]]
 }
 
+skip_ci_smoke() {
+    if is_ci_smoke_install; then
+        echo "Skipping $1: CI smoke mode."
+        return 0
+    fi
+    return 1
+}
+
+npm_install_global() {
+    local package="$1"
+    local npm_prefix="$HOME/.local"
+
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: npm install -g --prefix $npm_prefix $package"
+        return
+    fi
+
+    mkdir -p "$npm_prefix"
+    npm install -g --prefix "$npm_prefix" "$package"
+}
+
 should_force_nvim_bootstrap() {
     [[ "${DOTFILES_FORCE_NVIM_BOOTSTRAP:-}" == "1" ]]
 }
@@ -508,8 +529,7 @@ install_starship() {
         return
     fi
 
-    if is_ci_smoke_install; then
-        echo "Skipping starship install: CI smoke mode."
+    if skip_ci_smoke "starship install"; then
         return
     fi
 
@@ -564,8 +584,7 @@ install_rustup() {
         return
     fi
 
-    if is_ci_smoke_install; then
-        echo "Skipping rustup install: CI smoke mode."
+    if skip_ci_smoke "rustup install"; then
         return
     fi
 
@@ -608,8 +627,7 @@ install_tree_sitter_cli() {
     local installed_version=""
     local pinned_binary="$cargo_root/bin/tree-sitter"
 
-    if is_ci_smoke_install; then
-        echo "Skipping tree-sitter-cli install: CI smoke mode."
+    if skip_ci_smoke "tree-sitter-cli install"; then
         return
     fi
 
@@ -651,8 +669,7 @@ ensure_utf8_locale_linux() {
         return
     fi
 
-    if is_ci_smoke_install; then
-        echo "Skipping locale setup: CI smoke mode."
+    if skip_ci_smoke "locale setup"; then
         return
     fi
 
@@ -696,8 +713,7 @@ install_omz_plugin() {
 }
 
 install_zsh_extras() {
-    if is_ci_smoke_install; then
-        echo "Skipping Oh My Zsh extras install: CI smoke mode."
+    if skip_ci_smoke "Oh My Zsh extras install"; then
         return
     fi
 
@@ -715,6 +731,11 @@ repair_homebrew_node_linkage() {
         return 0
     fi
 
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: brew list --formula merve node; npm -v; brew reinstall merve node if npm cannot start"
+        return 0
+    fi
+
     if ! command -v brew >/dev/null 2>&1; then
         return 0
     fi
@@ -728,11 +749,6 @@ repair_homebrew_node_linkage() {
     fi
 
     echo "npm is not runnable; reinstalling Homebrew merve and node for the current simdutf library."
-    if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: brew reinstall merve node"
-        return 0
-    fi
-
     (
         unset HOMEBREW_NO_AUTO_UPDATE HOMEBREW_NO_INSTALL_UPGRADE
         brew reinstall merve node
@@ -740,10 +756,7 @@ repair_homebrew_node_linkage() {
 }
 
 install_hunkdiff() {
-    local npm_prefix="$HOME/.local"
-
-    if is_ci_smoke_install; then
-        echo "Skipping hunkdiff install: CI smoke mode."
+    if skip_ci_smoke "hunkdiff install"; then
         return
     fi
 
@@ -758,20 +771,11 @@ install_hunkdiff() {
     fi
 
     echo "Installing hunkdiff for Git Hunk aliases..."
-    if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: npm install -g --prefix $npm_prefix hunkdiff"
-        return
-    fi
-
-    mkdir -p "$npm_prefix"
-    npm install -g --prefix "$npm_prefix" hunkdiff
+    npm_install_global hunkdiff
 }
 
 install_node_neovim_host() {
-    local npm_prefix="$HOME/.local"
-
-    if is_ci_smoke_install; then
-        echo "Skipping Node.js Neovim host install: CI smoke mode."
+    if skip_ci_smoke "Node.js Neovim host install"; then
         return
     fi
 
@@ -781,20 +785,13 @@ install_node_neovim_host() {
     fi
 
     echo "Installing Node.js Neovim host..."
-    if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: npm install -g --prefix $npm_prefix neovim"
-        return
-    fi
-
-    mkdir -p "$npm_prefix"
-    npm install -g --prefix "$npm_prefix" neovim
+    npm_install_global neovim
 }
 
 install_ruby_neovim_host() {
     local gem_bindir
 
-    if is_ci_smoke_install; then
-        echo "Skipping Ruby Neovim host install: CI smoke mode."
+    if skip_ci_smoke "Ruby Neovim host install"; then
         return
     fi
 
@@ -885,8 +882,7 @@ ensure_default_shell_is_zsh() {
 install_tpm() {
     local tpm_dir="$HOME/.tmux/plugins/tpm"
 
-    if is_ci_smoke_install; then
-        echo "Skipping Tmux Plugin Manager install: CI smoke mode."
+    if skip_ci_smoke "Tmux Plugin Manager install"; then
         return
     fi
 
@@ -919,8 +915,7 @@ emacs_plus_prefix() {
 install_spacemacs() {
     local emacs_d="$HOME/.emacs.d"
 
-    if is_ci_smoke_install; then
-        echo "Skipping Spacemacs clone: CI smoke mode."
+    if skip_ci_smoke "Spacemacs clone"; then
         return
     fi
 
@@ -947,7 +942,14 @@ prefer_emacs_plus_on_path() {
         return
     fi
 
-    if [[ -z "$DRY_RUN" ]] && ! is_operator_home; then
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: brew --prefix $formula"
+        echo "DRY RUN: brew list --formula emacs && brew unlink emacs"
+        echo "DRY RUN: brew link --overwrite $formula"
+        return
+    fi
+
+    if ! is_operator_home; then
         echo "Skipping emacs-plus PATH link: not running against the operator home."
         return
     fi
@@ -974,13 +976,19 @@ install_macos_emacs_app() {
         return
     fi
 
-    if [[ -z "$DRY_RUN" ]] && ! is_operator_home; then
-        echo "Skipping Emacs.app copy: not running against the operator home."
+    if skip_ci_smoke "Emacs.app copy"; then
         return
     fi
 
-    if is_ci_smoke_install; then
-        echo "Skipping Emacs.app copy: CI smoke mode."
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: brew --prefix $formula"
+        echo "DRY RUN: cp -R <prefix>/Emacs.app /Applications/Emacs.app"
+        echo "DRY RUN: cp -R <prefix>/Emacs Client.app /Applications/Emacs Client.app"
+        return
+    fi
+
+    if ! is_operator_home; then
+        echo "Skipping Emacs.app copy: not running against the operator home."
         return
     fi
 
@@ -1059,14 +1067,13 @@ platform_variant() {
 }
 
 build_link_specs() {
-    local tmux_source ghostty_source platform_dir
-    tmux_source="$(platform_source_file ".tmux.conf" ".tmux.conf")"
+    local ghostty_source platform_dir
     ghostty_source="$(platform_source_file "ghostty/config.macos" "ghostty/config.linux")"
     platform_dir="platforms/$(platform_variant)"
 
     link_specs=(
         "$platform_dir/.zshrc|$HOME/.zshrc|.zshrc in home directory"
-        "$tmux_source|$HOME/.tmux.conf|.tmux.conf in home directory"
+        ".tmux.conf|$HOME/.tmux.conf|.tmux.conf in home directory"
         "tmux/common.conf|$HOME/.tmux/common.conf|tmux common config"
         "tmux/macos.conf|$HOME/.tmux/macos.conf|tmux macOS config"
         "tmux/linux.conf|$HOME/.tmux/linux.conf|tmux Linux config"

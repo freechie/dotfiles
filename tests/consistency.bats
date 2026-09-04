@@ -23,7 +23,7 @@
   [ "$(git config --file .gitconfig --get alias.hunkshow)" = '!hunk show' ]
 
   grep -q 'install_hunkdiff()' install.sh
-  grep -q 'npm install -g --prefix "$npm_prefix" hunkdiff' install.sh
+  grep -q 'npm_install_global hunkdiff' install.sh
 }
 
 @test "all install entrypoints referenced by install.sh exist in repo" {
