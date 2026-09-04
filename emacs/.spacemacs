@@ -46,7 +46,9 @@ This function should only modify configuration layer settings."
      ;; lsp
      ;; markdown
      multiple-cursors
-     ;; org
+     org
+     (python :variables
+             python-test-runner 'pytest)
      ;; (shell :variables
      ;;        shell-default-height 30
      ;;        shell-default-position 'bottom)
@@ -583,7 +585,10 @@ before packages are loaded."
     :init (spacemacs/defer-until-after-user-config #'auto-dark-mode)
     :config
     (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light)))
-    :defer t))
+    :defer t)
+  (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
+    (when (file-readable-p local)
+      (load local nil t))))
 
 
 ;; Do not write anything past this comment. This is where Emacs will
