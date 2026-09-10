@@ -16,14 +16,14 @@ bindkey -M menuselect '^i' menu-complete
 bindkey -M menuselect '^[[Z' reverse-menu-complete
 
 if command -v direnv >/dev/null 2>&1; then
-    eval "$(direnv hook zsh)"
+    dotfiles_source_eval_cache direnv "$(whence -p direnv)" direnv hook zsh
 fi
 
 if command -v starship >/dev/null 2>&1; then
     if dotfiles_is_wsl && dotfiles_is_windows_mount_path; then
         PROMPT='%F{green}%n%f@%F{cyan}%m%f:%F{magenta}%2~%f %(?.%F{green}.%F{red})»%f '
     else
-        eval "$(starship init zsh)"
+        dotfiles_source_eval_cache starship "$(whence -p starship)" starship init zsh
     fi
 fi
 

@@ -10,32 +10,10 @@ if [ -d "$FNM_PATH" ]; then
   eval "$(fnm env --shell zsh)"
 fi
 
-# >>> juliaup initialize >>>
+# juliaup PATH is in shell/zsh/path/common.zsh.
+# Completions lazy-load via load_juliaup_completions; do not re-run juliaup's zsh init.
 
-# !! Contents within this block are managed by juliaup !!
-
-path=('/Users/what/.juliaup/bin' $path)
-export PATH
-# Tab completion for juliaup and julia channel selection
-[ -f "/Users/what/.julia/juliaup/completions/zsh.zsh" ] && source "/Users/what/.julia/juliaup/completions/zsh.zsh"
-
-# <<< juliaup initialize <<<
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/what/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/Users/what/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/Users/what/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/what/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-
+# Conda is lazy-loaded by load_conda in shell/zsh/lang-managers.zsh.
+# Do not re-run `conda init zsh`; it would restore a 500ms+ Python hook on every prompt.
 
 export PATH="$HOME/.gem/ruby/4.0.0/bin:$PATH"
-

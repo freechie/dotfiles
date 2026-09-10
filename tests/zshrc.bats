@@ -252,6 +252,67 @@ EOF
   [[ "$output" == *"load_nvm"* ]]
 }
 
+@test "zshrc properly configures lazy-loaded conda" {
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; which conda"
+  [ -n "$output" ]
+  [[ "$output" == *"conda ()"* ]]
+  [[ "$output" == *"load_conda"* ]]
+}
+
+@test "macOS zshrc does not eagerly init conda" {
+  run grep -F "conda shell.zsh hook" platforms/macos/.zshrc
+  [ "$status" -eq 1 ]
+}
+
+@test "conda lazy-load does not run the Python hook at startup" {
+  mkdir -p "$HOME/anaconda3/bin" "$HOME/anaconda3/etc/profile.d"
+  cat > "$HOME/anaconda3/bin/conda" <<'EOF'
+#!/bin/sh
+echo "invoked $*" >> "${CONDA_PROBE:?}"
+exit 1
+EOF
+  chmod +x "$HOME/anaconda3/bin/conda"
+  printf '%s\n' 'conda() { echo "loaded-conda $*"; }' > "$HOME/anaconda3/etc/profile.d/conda.sh"
+
+  run env CONDA_PROBE="$BATS_TEST_TMPDIR/conda.probe" zsh -c "source .zshrc 2>/tmp/zshrc_err; conda env list"
+  [ "$status" -eq 0 ]
+  [ "$output" = "loaded-conda env list" ]
+  [ ! -f "$BATS_TEST_TMPDIR/conda.probe" ]
+}
+
+@test "conda lazy-load does not shadow existing aliases" {
+  run zsh -c "alias conda='echo aliased'; source .zshrc 2>/tmp/zshrc_err; alias conda"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"='echo aliased'"* ]]
+}
+
+@test "macOS zshrc does not eagerly source juliaup completions" {
+  run grep -F "juliaup/completions" platforms/macos/.zshrc
+  [ "$status" -eq 1 ]
+}
+
+@test "zshrc lazy-loads juliaup completions" {
+  mkdir -p "$HOME/.julia/juliaup/completions"
+  printf '%s\n' 'echo "juliaup-comps-loaded" >> "$JULIAUP_PROBE"' > "$HOME/.julia/juliaup/completions/zsh.zsh"
+
+  run env JULIAUP_PROBE="$BATS_TEST_TMPDIR/juliaup.probe" zsh -c "source .zshrc 2>/tmp/zshrc_err; which juliaup"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"juliaup ()"* ]]
+  [[ "$output" == *"load_juliaup_completions"* ]]
+  [ ! -f "$BATS_TEST_TMPDIR/juliaup.probe" ]
+}
+
+@test "zshrc caches starship init when starship exists" {
+  if ! command -v starship >/dev/null 2>&1; then
+    skip "starship is not installed"
+  fi
+
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; echo ok"
+  [ "$status" -eq 0 ]
+  [ "$output" = "ok" ]
+  [ -s "$HOME/.cache/dotfiles/starship.zsh" ]
+}
+
 @test "zshrc path contains basic directories" {
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; echo \$PATH"
   [ -n "$output" ]
@@ -284,6 +345,31 @@ EOF
   run zsh -c "DOTFILES_PLATFORM=linux source .zshrc 2>/tmp/zshrc_err; print -l -- \$plugins"
   [[ "$output" == *"sudo"* ]]
   [[ "$output" != *"macos"* ]]
+}
+
+@test "zshrc does not source oh-my-zsh.sh" {
+  run grep -E 'source .+oh-my-zsh\.sh' shell/zsh/plugins.zsh
+  [ "$status" -eq 1 ]
+}
+
+@test "zshrc enables case-insensitive path completion" {
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; zstyle -L ':completion:*' matcher-list"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'m:{[:lower:][:upper:]}={[:upper:][:lower:]}'* ]]
+}
+
+@test "zshrc enables complete_in_word for path completion" {
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; [[ -o complete_in_word ]] && print yes"
+  [ "$status" -eq 0 ]
+  [ "$output" = "yes" ]
+}
+
+@test "zshrc binds menuselect keys without error" {
+  run zsh -c "source .zshrc 2>$BATS_TEST_TMPDIR/zshrc_stderr; echo ok"
+  [ "$status" -eq 0 ]
+  [ "$output" = "ok" ]
+  run grep -F 'menuselect' "$BATS_TEST_TMPDIR/zshrc_stderr"
+  [ "$status" -eq 1 ]
 }
 
 @test "zshrc keeps Oh My Zsh compfix enabled unless explicitly disabled" {
