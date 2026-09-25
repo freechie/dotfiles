@@ -309,7 +309,8 @@ return {
 				mapping = {
 					["<C-k>"] = cmp.mapping.select_prev_item(),
 					["<C-j>"] = cmp.mapping.select_next_item(),
-					["<CR>"] = cmp.mapping.confirm({ select = true }),
+					["<C-e>"] = cmp.mapping.abort(),
+					["<CR>"] = cmp.mapping.confirm({ select = false }),
 					["<C-g>d"] = cmp.mapping(open_completion_documentation_url, { "i", "s" }),
 					["<C-g>c"] = cmp.mapping.complete(),
 					["<Tab>"] = cmp.mapping(function(fallback)
