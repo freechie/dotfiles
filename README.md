@@ -101,7 +101,7 @@ brew bundle --file=Brewfile.personal-macos
 - Shell: `.zshrc`, `.bash_profile`, shared modules in `shell/`
 - tmux: `.tmux.conf`, platform overrides in `tmux/`
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
-- Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`; `~/.emacs.d` is a clone of develop)
+- Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`) and `emacs/local.el` (linked to `~/.spacemacs.d/local.el`). `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
 - Ghostty: platform configs in `ghostty/`
 - Starship: `starship.toml` (platform paths under `platforms/` are symlinks to it)
 - Git: `.gitconfig`, `.gitignore_global`

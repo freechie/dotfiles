@@ -32,7 +32,8 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
+   '(html
+     markdown
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -593,3 +594,82 @@ before packages are loaded."
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
+(defun dotspacemacs/emacs-custom-settings ()
+  "Emacs custom settings.
+This is an auto-generated function, do not modify its content directly, use
+Emacs customize menu instead.
+This function is called at the very end of Spacemacs initialization."
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(package-selected-packages
+     '(ace-link add-node-modules-path afternoon-theme aggressive-indent alect-themes
+                all-the-icons ample-theme ample-zen-theme anaconda-mode
+                anti-zenburn-theme apropospriate-theme auto-compile auto-dark
+                auto-highlight-symbol avy-jump-helm-line badwolf-theme
+                birds-of-paradise-plus-theme bubbleberry-theme busybee-theme
+                centered-cursor-mode cherry-blossom-theme chocolate-theme
+                clean-aindent-mode clues-theme code-cells
+                color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
+                column-enforce-mode company company-emoji company-web counsel
+                counsel-css cyberpunk-theme cython-mode dakrone-theme
+                darkmine-theme darkokai-theme darktooth-theme define-word devdocs
+                diminish dired-quick-sort disable-mouse django-theme doom-themes
+                dotenv-mode dracula-theme drag-stuff dumb-jump edit-indirect
+                ef-themes elisp-def elisp-demos elisp-slime-nav emmet-mode
+                emoji-cheat-sheet-plus emr espresso-theme eval-sexp-fu evil-anzu
+                evil-args evil-cleverparens evil-collection evil-easymotion
+                evil-escape evil-evilified-state evil-exchange evil-goggles
+                evil-iedit-state evil-indent-plus evil-lion evil-lisp-state
+                evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-org
+                evil-surround evil-textobj-line evil-tutor evil-unimpaired
+                evil-visual-mark-mode evil-visualstar exotica-theme expand-region
+                eyebrowse eziam-themes fancy-battery farmhouse-themes
+                flatland-theme flatui-theme flycheck gandalf-theme gh-md gnuplot
+                golden-ratio google-translate gotham-theme grandshell-theme
+                gruber-darker-theme gruvbox-theme haml-mode hc-zenburn-theme
+                helm-ag helm-comint helm-css-scss helm-descbinds helm-make
+                helm-mode-manager helm-org helm-org-rifle helm-projectile
+                helm-purpose helm-pydoc helm-swoop helm-xref hemisu-theme
+                heroku-theme hide-comnt highlight-indentation highlight-numbers
+                highlight-parentheses hl-todo holy-mode htmlize hungry-delete
+                hybrid-mode impatient-mode indent-guide info+ inkpot-theme
+                inspector ir-black-theme ivy jazz-theme jbeans-theme kaolin-themes
+                light-soap-theme link-hint live-py-mode lorem-ipsum lush-theme
+                macrostep madhat2r-theme markdown-mode markdown-toc material-theme
+                minimal-theme moe-theme molokai-theme monochrome-theme
+                monokai-theme multi-line mustang-theme nameless naquadah-theme
+                noctilux-theme obsidian-theme occidental-theme oldlace-theme
+                omtose-phellack-themes open-junk-file org-cliplink org-contrib
+                org-download org-mime org-pomodoro org-present org-projectile
+                org-rich-yank org-superstar organic-green-theme overseer
+                page-break-lines paradox password-generator pcre2el
+                phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
+                pipenv pippel planet-theme poetry popwin prettier-js
+                professional-theme pug-mode purple-haze-theme py-isort pydoc
+                pyenv-mode pylookup python-pytest quickrun railscasts-theme
+                rainbow-delimiters rebecca-theme restart-emacs reverse-theme
+                sass-mode scss-mode seti-theme simple-httpd slim-mode smyx-theme
+                soft-charcoal-theme soft-morning-theme soft-stone-theme
+                solarized-theme soothe-theme space-doc spacegray-theme spaceline
+                spacemacs-purpose-popwin spacemacs-whitespace-cleanup sphinx-doc
+                string-edit-at-point string-inflection subatomic-theme
+                subatomic256-theme sublime-themes sunny-day-theme swiper
+                symbol-overlay symon tagedit tango-2-theme tango-plus-theme
+                tangotango-theme tao-theme term-cursor toc-org toxi-theme
+                treemacs-evil treemacs-icons-dired treemacs-persp
+                treemacs-projectile twilight-anti-bright-theme
+                twilight-bright-theme twilight-theme ujelly-theme underwater-theme
+                undo-fu-session uuidgen valign vi-tilde-fringe vmd-mode
+                volatile-highlights vundo web-beautify web-completion-data
+                web-mode wgrep white-sand-theme winum writeroom-mode ws-butler
+                yapfify yasnippet zen-and-art-theme zenburn-theme zonokai-emacs)))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
+  )

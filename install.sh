@@ -1084,6 +1084,7 @@ build_link_specs() {
         "nvim|$HOME/.config/nvim|nvim in ~/.config directory"
         "$platform_dir/starship.toml|$HOME/.config/starship.toml|starship.toml in ~/.config directory"
         "emacs/.spacemacs|$HOME/.spacemacs|.spacemacs in home directory"
+        "emacs/local.el|$HOME/.spacemacs.d/local.el|Spacemacs local config"
     )
 
     local ghostty_target

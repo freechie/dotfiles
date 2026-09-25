@@ -57,6 +57,7 @@ expected_link_target() {
         ".config/nvim") printf '%s\n' "$repo_root/nvim" ;;
         ".config/starship.toml") printf '%s\n' "$repo_root/platforms/$platform_dir/starship.toml" ;;
         ".spacemacs") printf '%s\n' "$repo_root/emacs/.spacemacs" ;;
+        ".spacemacs.d/local.el") printf '%s\n' "$repo_root/emacs/local.el" ;;
         *) return 1 ;;
     esac
 }

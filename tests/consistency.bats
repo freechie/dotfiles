@@ -48,6 +48,7 @@
     "tmux/macos.conf"
     "tmux/linux.conf"
     "emacs/.spacemacs"
+    "emacs/local.el"
   )
 
   for f in "${expected[@]}"; do

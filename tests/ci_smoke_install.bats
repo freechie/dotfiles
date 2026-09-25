@@ -21,6 +21,7 @@ make_mock_repo() {
   : > "$repo/platforms/macos/.bash_profile"
   : > "$repo/platforms/macos/starship.toml"
   : > "$repo/emacs/.spacemacs"
+  : > "$repo/emacs/local.el"
 
   cat > "$repo/install.sh" <<EOF
 #!/usr/bin/env bash
@@ -40,6 +41,8 @@ ln -snf "$repo/platforms/$platform_dir/.zshrc" "$HOME/.zshrc"
 ln -snf "$repo/platforms/$platform_dir/.bash_profile" "$HOME/.bash_profile"
 ln -snf "$repo/platforms/$platform_dir/starship.toml" "$HOME/.config/starship.toml"
 ln -snf "$repo/emacs/.spacemacs" "$HOME/.spacemacs"
+mkdir -p "$HOME/.spacemacs.d"
+ln -snf "$repo/emacs/local.el" "$HOME/.spacemacs.d/local.el"
 ln -snf "$repo/.tmux.conf" "$HOME/.tmux.conf"
 touch "$repo/.tmux.conf"
 if [ -n "$bin_dir" ]; then
@@ -138,6 +141,7 @@ EOF
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/ubuntu/.bash_profile" ]
   [ "$(readlink "$HOME/.config/starship.toml")" = "$repo/platforms/ubuntu/starship.toml" ]
   [ "$(readlink "$HOME/.spacemacs")" = "$repo/emacs/.spacemacs" ]
+  [ "$(readlink "$HOME/.spacemacs.d/local.el")" = "$repo/emacs/local.el" ]
 
   run cat "$bin_dir/git.log"
   [ "$status" -eq 0 ]
@@ -196,6 +200,7 @@ EOF
   [ "$(readlink "$HOME/.bash_profile")" = "$repo/platforms/macos/.bash_profile" ]
   [ "$(readlink "$HOME/.config/starship.toml")" = "$repo/platforms/macos/starship.toml" ]
   [ "$(readlink "$HOME/.spacemacs")" = "$repo/emacs/.spacemacs" ]
+  [ "$(readlink "$HOME/.spacemacs.d/local.el")" = "$repo/emacs/local.el" ]
 }
 
 @test "ci smoke install runs macOS full then skip-deps" {

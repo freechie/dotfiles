@@ -94,6 +94,7 @@ DOTFILES_VERIFY_LINKS_COMMON=(
     ".config/nvim"
     ".config/starship.toml"
     ".spacemacs"
+    ".spacemacs.d/local.el"
 )
 
 dotfiles_join_by() {
