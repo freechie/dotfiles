@@ -6,14 +6,6 @@ return {
 		opts = function()
 			local dashboard = require("alpha.themes.dashboard")
 
-			dashboard.section.header.val = {
-				[[    _   __                _         ]],
-				[[   / | / /__  ____ _   __(_)___ ___ ]],
-				[[  /  |/ / _ \/ __ \ | / / / __ `__ \]],
-				[[ / /|  /  __/ /_/ / |/ / / / / / / /]],
-				[[/_/ |_/\___/\____/|___/_/_/ /_/ /_/ ]],
-			}
-
 			dashboard.section.buttons.val = {
 				dashboard.button("f", "  Find File", ":Telescope find_files <CR>"),
 				dashboard.button("n", "  New File", ":enew <CR>"),
