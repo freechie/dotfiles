@@ -32,7 +32,8 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(html
+   '(octave
+     html
      markdown
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
@@ -235,7 +236,7 @@ It should only modify the values of Spacemacs settings."
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 16.0
+                               :size 18.0
                                :weight normal
                                :width normal)
 
@@ -432,7 +433,7 @@ It should only modify the values of Spacemacs settings."
    ;;   :size-limit-kb 1000)
    ;; When used in a plist, `visual' takes precedence over `relative'.
    ;; (default nil)
-   dotspacemacs-line-numbers nil
+   dotspacemacs-line-numbers t
 
    ;; Code folding method. Possible values are `evil', `origami' and `vimish'.
    ;; (default 'evil)
@@ -587,6 +588,23 @@ before packages are loaded."
     :config
     (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light)))
     :defer t)
+  ;; Scroll long lines horizontally instead of wrapping them.
+  (setq-default truncate-lines t
+                word-wrap nil)
+  (add-hook 'after-change-major-mode-hook
+            (lambda ()
+              (visual-line-mode -1)
+              (setq truncate-lines t
+                    word-wrap nil)))
+  ;; Spacemacs auto-layer claims .m for Octave and still prompts after the
+  ;; layer is removed. https://github.com/syl20bnr/spacemacs/issues/5634
+  (setq auto-mode-alist
+        (seq-remove
+         (lambda (entry)
+           (and (member (car entry) '("\\.m\\'" "\\(\\.m\\'\\)"))
+                (not (eq (cdr entry) 'objc-mode))))
+         auto-mode-alist))
+  (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
   (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
     (when (file-readable-p local)
       (load local nil t))))
@@ -627,25 +645,25 @@ This function is called at the very end of Spacemacs initialization."
                 evil-surround evil-textobj-line evil-tutor evil-unimpaired
                 evil-visual-mark-mode evil-visualstar exotica-theme expand-region
                 eyebrowse eziam-themes fancy-battery farmhouse-themes
-                flatland-theme flatui-theme flycheck gandalf-theme gh-md gnuplot
-                golden-ratio google-translate gotham-theme grandshell-theme
-                gruber-darker-theme gruvbox-theme haml-mode hc-zenburn-theme
-                helm-ag helm-comint helm-css-scss helm-descbinds helm-make
-                helm-mode-manager helm-org helm-org-rifle helm-projectile
-                helm-purpose helm-pydoc helm-swoop helm-xref hemisu-theme
-                heroku-theme hide-comnt highlight-indentation highlight-numbers
-                highlight-parentheses hl-todo holy-mode htmlize hungry-delete
-                hybrid-mode impatient-mode indent-guide info+ inkpot-theme
-                inspector ir-black-theme ivy jazz-theme jbeans-theme kaolin-themes
-                light-soap-theme link-hint live-py-mode lorem-ipsum lush-theme
-                macrostep madhat2r-theme markdown-mode markdown-toc material-theme
-                minimal-theme moe-theme molokai-theme monochrome-theme
-                monokai-theme multi-line mustang-theme nameless naquadah-theme
-                noctilux-theme obsidian-theme occidental-theme oldlace-theme
-                omtose-phellack-themes open-junk-file org-cliplink org-contrib
-                org-download org-mime org-pomodoro org-present org-projectile
-                org-rich-yank org-superstar organic-green-theme overseer
-                page-break-lines paradox password-generator pcre2el
+                flatland-theme flatui-theme flycheck gandalf-theme ggtags gh-md
+                gnuplot golden-ratio google-translate gotham-theme
+                grandshell-theme gruber-darker-theme gruvbox-theme haml-mode
+                hc-zenburn-theme helm-ag helm-comint helm-css-scss helm-descbinds
+                helm-make helm-mode-manager helm-org helm-org-rifle
+                helm-projectile helm-purpose helm-pydoc helm-swoop helm-xref
+                hemisu-theme heroku-theme hide-comnt highlight-indentation
+                highlight-numbers highlight-parentheses hl-todo holy-mode htmlize
+                hungry-delete hybrid-mode impatient-mode indent-guide info+
+                inkpot-theme inspector ir-black-theme ivy jazz-theme jbeans-theme
+                kaolin-themes light-soap-theme link-hint live-py-mode lorem-ipsum
+                lush-theme macrostep madhat2r-theme markdown-mode markdown-toc
+                material-theme minimal-theme moe-theme molokai-theme
+                monochrome-theme monokai-theme multi-line mustang-theme nameless
+                naquadah-theme noctilux-theme obsidian-theme occidental-theme
+                oldlace-theme omtose-phellack-themes open-junk-file org-cliplink
+                org-contrib org-download org-mime org-pomodoro org-present
+                org-projectile org-rich-yank org-superstar organic-green-theme
+                overseer page-break-lines paradox password-generator pcre2el
                 phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
                 pipenv pippel planet-theme poetry popwin prettier-js
                 professional-theme pug-mode purple-haze-theme py-isort pydoc
@@ -672,4 +690,15 @@ This function is called at the very end of Spacemacs initialization."
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    )
+
+  (add-to-list 'magic-mode-alist
+               '((lambda ()
+                   (and buffer-file-name
+                        (string-match-p "\\.m\\'" buffer-file-name)
+                        (save-excursion
+                          (goto-char (point-min))
+                          (re-search-forward
+                           "^[[:space:]]*\\(#import\\|@interface\\|@implementation\\|@autoreleasepool\\)"
+                           nil t))))
+                 . objc-mode))
   )
