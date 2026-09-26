@@ -36,8 +36,9 @@ dotfiles_is_wsl() {
 }
 
 dotfiles_is_windows_mount_path() {
+    # WSL Windows drives are /mnt/<letter>. Leave other /mnt paths alone.
     case "${1:-$PWD}" in
-        /mnt/*) return 0 ;;
+        /mnt/[a-zA-Z]|/mnt/[a-zA-Z]/*) return 0 ;;
         *) return 1 ;;
     esac
 }

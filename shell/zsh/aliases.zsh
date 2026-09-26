@@ -16,12 +16,12 @@ fi
 
 if command -v eza >/dev/null 2>&1; then
   if dotfiles_use_eza_icons; then
-    alias ls='eza --icons --git'
+    alias ls='eza --icons'
     alias ll='eza --icons --git -l'
     alias la='eza --icons --git -la'
     alias tree='eza --icons --tree --level=2'
   else
-    alias ls='eza --git'
+    alias ls='eza'
     alias ll='eza --git -l'
     alias la='eza --git -la'
     alias tree='eza --tree --level=2'
@@ -46,7 +46,16 @@ alias tls='tmux ls'
 alias tk='tmux kill-session -t'
 alias tka="tmux list-sessions | grep -v '(attached)' | cut -d: -f1 | xargs -I {} tmux kill-session -t {}"
 
-alias paneps="ps -t $(tty | sed 's#/dev/##') -o pid,ppid,stat,command"
+(( $+aliases[paneps] )) && unalias paneps
+
+function paneps {
+  local tty_name
+  tty_name="$(tty 2>/dev/null | sed 's#/dev/##')" || return 1
+  if [[ -z "$tty_name" ]]; then
+    return 1
+  fi
+  ps -t "$tty_name" -o pid,ppid,stat,command
+}
 
 (( $+aliases[bbu] )) && unalias bbu
 

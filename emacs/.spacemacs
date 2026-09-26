@@ -34,30 +34,30 @@ This function should only modify configuration layer settings."
    dotspacemacs-configuration-layers
    '(octave
      html
-     markdown
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
      ;; `M-m f e R' (Emacs style) to install them.
      ;; ----------------------------------------------------------------
-     ;; auto-completion
-     ;; better-defaults
+     auto-completion
+     better-defaults
      emacs-lisp
-     ;; git
      helm
-     ;; lsp
-     ;; markdown
+     markdown
+     c-c++
      multiple-cursors
      org
      (python :variables
+             python-backend 'lsp
+             python-lsp-server 'pyright
              python-test-runner 'pytest)
-     ;; (shell :variables
-     ;;        shell-default-height 30
-     ;;        shell-default-position 'bottom)
-     ;; spell-checking
-     ;; syntax-checking
+     (shell :variables
+            shell-default-shell 'ghostel
+            shell-default-position 'bottom)
+     spell-checking
+     syntax-checking
      themes-megapack
-     ;; version-control
+     version-control
      treemacs)
 
 
@@ -236,7 +236,7 @@ It should only modify the values of Spacemacs settings."
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 18.0
+                               :size 17.0
                                :weight normal
                                :width normal)
 
@@ -583,6 +583,14 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+  ;; eza --icons prints Nerd Font private-use glyphs. Source Code Pro has
+  ;; none of them, so Emacs draws hex boxes. Keep the text font and only
+  ;; fall back for those icon ranges.
+  (let ((icon-font "FiraCode Nerd Font Mono"))
+    (dolist (range '((#xe000 . #xf8ff)
+                     (#xf0000 . #xffffd)
+                     (#x100000 . #x10fffd)))
+      (set-fontset-font t range icon-font nil 'prepend)))
   (use-package auto-dark
     :init (spacemacs/defer-until-after-user-config #'auto-dark-mode)
     :config
@@ -605,6 +613,25 @@ before packages are loaded."
                 (not (eq (cdr entry) 'objc-mode))))
          auto-mode-alist))
   (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
+  (add-hook 'objc-mode-hook #'lsp)
+  ;; RET indents, then clangd's on-type format can put point back in
+  ;; front of that indent. Those spaces are trailing whitespace, so they
+  ;; draw red, and typing inserts before them.
+  (defun dotfiles/point-after-line-indent ()
+    "Move point to after this line's indentation when it is still inside it."
+    (let ((limit (save-excursion (back-to-indentation) (point))))
+      (when (< (point) limit)
+        (goto-char limit))))
+  (defun dotfiles/newline-leave-point-after-indent ()
+    (when (eq last-command-event ?\n)
+      (dotfiles/point-after-line-indent)))
+  (defun dotfiles/lsp-newline-leave-point-after-indent (&rest _)
+    (when (eq last-command 'newline)
+      (dotfiles/point-after-line-indent)))
+  (add-hook 'post-self-insert-hook
+            #'dotfiles/newline-leave-point-after-indent 90)
+  (add-hook 'lsp-after-apply-edits-hook
+            #'dotfiles/lsp-newline-leave-point-after-indent)
   (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
     (when (file-readable-p local)
       (load local nil t))))
@@ -623,82 +650,74 @@ This function is called at the very end of Spacemacs initialization."
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    '(package-selected-packages
-     '(ace-link add-node-modules-path afternoon-theme aggressive-indent alect-themes
-                all-the-icons ample-theme ample-zen-theme anaconda-mode
-                anti-zenburn-theme apropospriate-theme auto-compile auto-dark
-                auto-highlight-symbol avy-jump-helm-line badwolf-theme
-                birds-of-paradise-plus-theme bubbleberry-theme busybee-theme
-                centered-cursor-mode cherry-blossom-theme chocolate-theme
-                clean-aindent-mode clues-theme code-cells
-                color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
-                column-enforce-mode company company-emoji company-web counsel
-                counsel-css cyberpunk-theme cython-mode dakrone-theme
-                darkmine-theme darkokai-theme darktooth-theme define-word devdocs
-                diminish dired-quick-sort disable-mouse django-theme doom-themes
-                dotenv-mode dracula-theme drag-stuff dumb-jump edit-indirect
-                ef-themes elisp-def elisp-demos elisp-slime-nav emmet-mode
-                emoji-cheat-sheet-plus emr espresso-theme eval-sexp-fu evil-anzu
-                evil-args evil-cleverparens evil-collection evil-easymotion
-                evil-escape evil-evilified-state evil-exchange evil-goggles
-                evil-iedit-state evil-indent-plus evil-lion evil-lisp-state
-                evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-org
-                evil-surround evil-textobj-line evil-tutor evil-unimpaired
-                evil-visual-mark-mode evil-visualstar exotica-theme expand-region
-                eyebrowse eziam-themes fancy-battery farmhouse-themes
-                flatland-theme flatui-theme flycheck gandalf-theme ggtags gh-md
-                gnuplot golden-ratio google-translate gotham-theme
-                grandshell-theme gruber-darker-theme gruvbox-theme haml-mode
-                hc-zenburn-theme helm-ag helm-comint helm-css-scss helm-descbinds
-                helm-make helm-mode-manager helm-org helm-org-rifle
-                helm-projectile helm-purpose helm-pydoc helm-swoop helm-xref
-                hemisu-theme heroku-theme hide-comnt highlight-indentation
-                highlight-numbers highlight-parentheses hl-todo holy-mode htmlize
-                hungry-delete hybrid-mode impatient-mode indent-guide info+
-                inkpot-theme inspector ir-black-theme ivy jazz-theme jbeans-theme
-                kaolin-themes light-soap-theme link-hint live-py-mode lorem-ipsum
-                lush-theme macrostep madhat2r-theme markdown-mode markdown-toc
-                material-theme minimal-theme moe-theme molokai-theme
-                monochrome-theme monokai-theme multi-line mustang-theme nameless
-                naquadah-theme noctilux-theme obsidian-theme occidental-theme
-                oldlace-theme omtose-phellack-themes open-junk-file org-cliplink
-                org-contrib org-download org-mime org-pomodoro org-present
-                org-projectile org-rich-yank org-superstar organic-green-theme
-                overseer page-break-lines paradox password-generator pcre2el
-                phoenix-dark-mono-theme phoenix-dark-pink-theme pip-requirements
-                pipenv pippel planet-theme poetry popwin prettier-js
-                professional-theme pug-mode purple-haze-theme py-isort pydoc
-                pyenv-mode pylookup python-pytest quickrun railscasts-theme
-                rainbow-delimiters rebecca-theme restart-emacs reverse-theme
-                sass-mode scss-mode seti-theme simple-httpd slim-mode smyx-theme
-                soft-charcoal-theme soft-morning-theme soft-stone-theme
-                solarized-theme soothe-theme space-doc spacegray-theme spaceline
-                spacemacs-purpose-popwin spacemacs-whitespace-cleanup sphinx-doc
-                string-edit-at-point string-inflection subatomic-theme
-                subatomic256-theme sublime-themes sunny-day-theme swiper
-                symbol-overlay symon tagedit tango-2-theme tango-plus-theme
-                tangotango-theme tao-theme term-cursor toc-org toxi-theme
-                treemacs-evil treemacs-icons-dired treemacs-persp
-                treemacs-projectile twilight-anti-bright-theme
-                twilight-bright-theme twilight-theme ujelly-theme underwater-theme
-                undo-fu-session uuidgen valign vi-tilde-fringe vmd-mode
-                volatile-highlights vundo web-beautify web-completion-data
-                web-mode wgrep white-sand-theme winum writeroom-mode ws-butler
-                yapfify yasnippet zen-and-art-theme zenburn-theme zonokai-emacs)))
+     '(2048-game ace-link add-node-modules-path afternoon-theme aggressive-indent
+                 alect-themes all-the-icons ample-theme ample-zen-theme
+                 anaconda-mode anti-zenburn-theme apropospriate-theme auto-compile
+                 auto-dark auto-highlight-symbol avy-jump-helm-line badwolf-theme
+                 birds-of-paradise-plus-theme browse-at-remote bubbleberry-theme
+                 bui busybee-theme centered-cursor-mode cherry-blossom-theme
+                 chocolate-theme clean-aindent-mode clues-theme code-cells
+                 color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
+                 column-enforce-mode company company-c-headers company-emoji
+                 company-web counsel counsel-css cpp-auto-include cyberpunk-theme
+                 cython-mode dakrone-theme dap-mode darkmine-theme darkokai-theme
+                 darktooth-theme define-word devdocs diff-hl diminish
+                 dired-quick-sort disable-mouse disaster django-theme doom-themes
+                 dotenv-mode dracula-theme drag-stuff dumb-jump edit-indirect
+                 ef-themes elisp-def elisp-demos elisp-slime-nav emmet-mode
+                 emoji-cheat-sheet-plus emr espresso-theme eval-sexp-fu evil-anzu
+                 evil-args evil-cleverparens evil-collection evil-easymotion
+                 evil-escape evil-evilified-state evil-exchange evil-goggles
+                 evil-iedit-state evil-indent-plus evil-lion evil-lisp-state
+                 evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-org
+                 evil-surround evil-textobj-line evil-tutor evil-unimpaired
+                 evil-visual-mark-mode evil-visualstar exotica-theme expand-region
+                 eyebrowse eziam-themes fancy-battery farmhouse-themes
+                 flatland-theme flatui-theme flycheck gandalf-theme gendoxy ggtags
+                 gh-md gnuplot golden-ratio google-c-style google-translate
+                 gotham-theme grandshell-theme gruber-darker-theme gruvbox-theme
+                 haml-mode hc-zenburn-theme helm-ag helm-comint helm-css-scss
+                 helm-descbinds helm-make helm-mode-manager helm-org
+                 helm-org-rifle helm-projectile helm-purpose helm-pydoc helm-swoop
+                 helm-xref hemisu-theme heroku-theme hide-comnt
+                 highlight-indentation highlight-numbers highlight-parentheses
+                 hl-todo holy-mode htmlize hungry-delete hybrid-mode
+                 impatient-mode indent-guide info+ inkpot-theme inspector
+                 ir-black-theme ivy jazz-theme jbeans-theme kaolin-themes
+                 light-soap-theme link-hint live-py-mode lorem-ipsum lsp-docker
+                 lush-theme macrostep madhat2r-theme markdown-mode markdown-toc
+                 material-theme minimal-theme mmt moe-theme molokai-theme
+                 monochrome-theme monokai-theme multi-line mustang-theme nameless
+                 naquadah-theme noctilux-theme obsidian-theme occidental-theme
+                 oldlace-theme omtose-phellack-themes open-junk-file org-cliplink
+                 org-contrib org-download org-mime org-pomodoro org-present
+                 org-projectile org-rich-yank org-superstar organic-green-theme
+                 overseer pacmacs page-break-lines paradox password-generator
+                 pcre2el phoenix-dark-mono-theme phoenix-dark-pink-theme
+                 pip-requirements pipenv pippel planet-theme poetry popwin
+                 prettier-js professional-theme pug-mode purple-haze-theme
+                 py-isort pydoc pyenv-mode pylookup python-pytest quickrun
+                 railscasts-theme rainbow-delimiters rebecca-theme restart-emacs
+                 reverse-theme sass-mode scss-mode seti-theme simple-httpd
+                 slim-mode smyx-theme soft-charcoal-theme soft-morning-theme
+                 soft-stone-theme solarized-theme soothe-theme space-doc
+                 spacegray-theme spaceline spacemacs-purpose-popwin
+                 spacemacs-whitespace-cleanup sphinx-doc string-edit-at-point
+                 string-inflection subatomic-theme subatomic256-theme
+                 sublime-themes sudoku sunny-day-theme swiper symbol-overlay symon
+                 tagedit tango-2-theme tango-plus-theme tangotango-theme tao-theme
+                 term-cursor toc-org toxi-theme treemacs-evil treemacs-icons-dired
+                 treemacs-persp treemacs-projectile twilight-anti-bright-theme
+                 twilight-bright-theme twilight-theme typit ujelly-theme
+                 underwater-theme undo-fu-session uuidgen valign vi-tilde-fringe
+                 vmd-mode volatile-highlights vundo web-beautify
+                 web-completion-data web-mode wgrep white-sand-theme winum
+                 writeroom-mode ws-butler yaml yapfify yasnippet zen-and-art-theme
+                 zenburn-theme zonokai-emacs)))
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    )
-
-  (add-to-list 'magic-mode-alist
-               '((lambda ()
-                   (and buffer-file-name
-                        (string-match-p "\\.m\\'" buffer-file-name)
-                        (save-excursion
-                          (goto-char (point-min))
-                          (re-search-forward
-                           "^[[:space:]]*\\(#import\\|@interface\\|@implementation\\|@autoreleasepool\\)"
-                           nil t))))
-                 . objc-mode))
   )

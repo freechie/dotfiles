@@ -62,7 +62,7 @@ source_zshrc_cmd() {
 
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; alias ls"
   if [ "$status" -eq 0 ]; then
-    [[ "$output" == *"eza --icons --git"* ]]
+    [[ "$output" == *"ls='eza --icons'"* ]]
   else
     [ "$status" -eq 1 ]
   fi
@@ -115,7 +115,7 @@ EOF
   run env DOTFILES_PLATFORM=linux PATH="$BATS_TEST_TMPDIR/bin:/usr/bin:/bin" zsh -c "source .zshrc 2>/tmp/zshrc_err; alias cd; alias ls; alias cat"
   [ "$status" -eq 0 ]
   [[ "$output" == *"cd=z"* ]]
-  [[ "$output" == *"ls='eza --icons --git'"* ]]
+  [[ "$output" == *"ls='eza --icons'"* ]]
   [[ "$output" == *"cat=bat"* ]]
 }
 
@@ -130,7 +130,7 @@ EOF
 
   run env DOTFILES_PLATFORM=macos PATH="$BATS_TEST_TMPDIR/bin:/usr/bin:/bin" zsh -c "source .zshrc 2>/tmp/zshrc_err; alias ls"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ls='eza --icons --git'"* ]]
+  [[ "$output" == *"ls='eza --icons'"* ]]
 }
 
 @test "zshrc enables icon aliases on Linux when explicitly requested" {
@@ -144,7 +144,7 @@ EOF
 
   run env DOTFILES_PLATFORM=linux DOTFILES_EZA_ICONS=1 PATH="$BATS_TEST_TMPDIR/bin:/usr/bin:/bin" zsh -c "source .zshrc 2>/tmp/zshrc_err; alias ls"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ls='eza --icons --git'"* ]]
+  [[ "$output" == *"ls='eza --icons'"* ]]
 }
 
 @test "zshrc sources cleanly without oh-my-zsh installed" {
@@ -188,10 +188,11 @@ EOF
 }
 
 @test "zshrc replaces conflicting update and bbu aliases on reload" {
-  run zsh -c "alias update='echo aliased'; alias bbu='echo aliased'; source .zshrc 2>$BATS_TEST_TMPDIR/zshrc_stderr; type update; type bbu"
+  run zsh -c "alias update='echo aliased'; alias bbu='echo aliased'; alias paneps='echo aliased'; source .zshrc 2>$BATS_TEST_TMPDIR/zshrc_stderr; type update; type bbu; type paneps"
   [ "$status" -eq 0 ]
   [[ "$output" == *"update is a shell function"* ]]
   [[ "$output" == *"bbu is a shell function"* ]]
+  [[ "$output" == *"paneps is a shell function"* ]]
 
   run grep -F "parse error" "$BATS_TEST_TMPDIR/zshrc_stderr"
   [ "$status" -eq 1 ]
@@ -419,6 +420,24 @@ EOF
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; _noarg_hl echo hello world"
   [ "$status" -eq 0 ]
   [ "$output" = "hello world" ]
+}
+
+@test "windows mount paths are drive letters only" {
+  run bash -c '
+    . ./shell/shared/platform.sh
+    dotfiles_is_windows_mount_path /mnt/c || exit 1
+    dotfiles_is_windows_mount_path /mnt/c/Users || exit 1
+    if dotfiles_is_windows_mount_path /mnt/wsl; then exit 1; fi
+    if dotfiles_is_windows_mount_path /mnt/data; then exit 1; fi
+    if dotfiles_is_windows_mount_path /home; then exit 1; fi
+  '
+  [ "$status" -eq 0 ]
+}
+
+@test "paneps reads the terminal when called" {
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; whence -w paneps"
+  [ "$status" -eq 0 ]
+  [[ "$output" == "paneps: function" ]]
 }
 
 @test "NVM lazy-load does not shadow existing aliases" {
