@@ -632,6 +632,9 @@ before packages are loaded."
             #'dotfiles/newline-leave-point-after-indent 90)
   (add-hook 'lsp-after-apply-edits-hook
             #'dotfiles/lsp-newline-leave-point-after-indent)
+  ;; "fd" leaves insert mode, which eats the letters in "fd" while typing.
+  (with-eval-after-load 'evil-escape
+    (evil-escape-mode -1))
   (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
     (when (file-readable-p local)
       (load local nil t))))
