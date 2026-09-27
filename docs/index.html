@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dotfiles</title>
+    <script>
+      document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: light)").matches
+        ? "light"
+        : "dark";
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    <header class="top">
+      <a
+        class="github"
+        href="https://github.com/freechie/dotfiles"
+        target="_blank"
+        rel="noopener noreferrer"
+      >GitHub</a>
+      <button class="theme-toggle" id="theme-toggle" type="button">Theme</button>
+    </header>
+
+    <main id="main">
+      <h1>Dotfiles</h1>
+      <p class="lead">Daily commands from this repo. Zsh, Git, tmux, Neovim, Ghostty, and Spacemacs.</p>
+
+      <section>
+        <h2>Shell</h2>
+        <ul class="items">
+          <li><code>ls</code><p class="item-meta">eza with icons. No git status.</p></li>
+          <li><code>ll</code><p class="item-meta">eza with icons, git status, and details.</p></li>
+          <li><code>la</code><p class="item-meta">Same as ll, including dotfiles.</p></li>
+          <li><code>cd</code><p class="item-meta">zoxide. Plain cd is the z command.</p></li>
+          <li><code>cat</code><p class="item-meta">bat, when it is installed.</p></li>
+          <li><code>reload</code><p class="item-meta">Source ~/.zshrc in this shell.</p></li>
+          <li><code>ta</code><p class="item-meta">Attach to a tmux session, or start one.</p></li>
+          <li><code>update</code><p class="item-meta">macOS software update, Homebrew upgrade, and Oh My Zsh.</p></li>
+          <li><code>bbu</code><p class="item-meta">Write Brewfile.snapshot. It does not edit the tracked Brewfiles.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Git</h2>
+        <ul class="items">
+          <li><code>gs</code><p class="item-meta">git status -sb.</p></li>
+          <li><code>gl</code><p class="item-meta">One-line graph of all branches.</p></li>
+          <li><code>gp</code><p class="item-meta">git push.</p></li>
+          <li><code>gpl</code><p class="item-meta">git pull --rebase --autostash.</p></li>
+          <li><code>gc</code><p class="item-meta">git commit -m. Pass the message in quotes.</p></li>
+          <li><code>lg</code><p class="item-meta">Open LazyGit.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Tmux</h2>
+        <p class="lead">Prefix is <code>Ctrl-a</code>.</p>
+        <ul class="items">
+          <li><kbd>C-a r</kbd><p class="item-meta">Reload ~/.tmux.conf.</p></li>
+          <li><kbd>C-a |</kbd><p class="item-meta">Split right, in the current directory.</p></li>
+          <li><kbd>C-a -</kbd><p class="item-meta">Split down, in the current directory.</p></li>
+          <li><kbd>C-a c</kbd><p class="item-meta">New window in the current directory.</p></li>
+          <li><kbd>C-a Space</kbd><p class="item-meta">Jump back to the previous window.</p></li>
+          <li><span><kbd>C-a n</kbd> / <kbd>p</kbd></span><p class="item-meta">Next or previous window.</p></li>
+          <li><kbd>C-a m</kbd><p class="item-meta">Zoom the current pane.</p></li>
+          <li><span><kbd>C-a H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd></span><p class="item-meta">Resize the pane by 5 cells.</p></li>
+          <li><kbd>C-a C-j</kbd><p class="item-meta">fzf list of other sessions.</p></li>
+          <li><span><kbd>v</kbd> then <kbd>y</kbd></span><p class="item-meta">In copy mode, select and copy.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Neovim</h2>
+        <p class="lead">Leader is <code>Space</code>.</p>
+        <ul class="items">
+          <li><kbd>Space w</kbd><p class="item-meta">Save the file.</p></li>
+          <li><kbd>Space q</kbd><p class="item-meta">Close the window.</p></li>
+          <li><kbd>Space Q</kbd><p class="item-meta">Force-quit every window.</p></li>
+          <li><kbd>Space e</kbd><p class="item-meta">Toggle the file tree.</p></li>
+          <li><kbd>Space ff</kbd><p class="item-meta">Fuzzy file search.</p></li>
+          <li><kbd>Space fg</kbd><p class="item-meta">Live grep in the project.</p></li>
+          <li><kbd>Space fb</kbd><p class="item-meta">Switch buffer.</p></li>
+          <li><kbd>Space fo</kbd><p class="item-meta">Reopen a recent file.</p></li>
+          <li><kbd>Space cf</kbd><p class="item-meta">Format the buffer.</p></li>
+          <li><kbd>Space gg</kbd><p class="item-meta">Open LazyGit.</p></li>
+          <li><span><kbd>[d</kbd> / <kbd>]d</kbd></span><p class="item-meta">Previous or next diagnostic.</p></li>
+          <li><kbd>Space Space</kbd><p class="item-meta">Clear the search highlight.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Ghostty</h2>
+        <ul class="items">
+          <li><kbd>Cmd+`</kbd><p class="item-meta">Toggle the quick terminal.</p></li>
+          <li><span><kbd>Cmd+Opt+h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between splits.</p></li>
+          <li><span>Right-click</span><p class="item-meta">Paste.</p></li>
+          <li><span>Select</span><p class="item-meta">Copy the selection.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Spacemacs</h2>
+        <p class="lead">Leader is <code>SPC</code>. Press <code>ESC</code> first if a key does nothing.</p>
+        <ul class="items">
+          <li><kbd>SPC SPC</kbd><p class="item-meta">Helm command menu. This is M-x.</p></li>
+          <li><kbd>SPC '</kbd><p class="item-meta">Popup Ghostel. TERM is xterm-ghostty.</p></li>
+          <li><kbd>SPC b b</kbd><p class="item-meta">Helm buffer list.</p></li>
+          <li><kbd>C-c d</kbd><p class="item-meta">In that list, kill the highlighted buffer and stay open.</p></li>
+          <li><kbd>SPC b d</kbd><p class="item-meta">Kill the current buffer.</p></li>
+          <li><kbd>SPC f e R</kbd><p class="item-meta">Reload ~/.spacemacs after an edit.</p></li>
+          <li><kbd>SPC q R</kbd><p class="item-meta">Restart Emacs so startup settings apply.</p></li>
+        </ul>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>

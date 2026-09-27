@@ -168,6 +168,19 @@ SHA256 together in `config/toolchain.sh`.
 - `update`: platform-specific system update helper
 - `bbu`: write ignored Homebrew snapshot
 
+## GitHub Pages
+
+`docs/` is the command cheat sheet. Publish GitHub Pages from the `main`
+branch, folder `/docs`:
+
+```text
+https://freechie.github.io/dotfiles/
+```
+
+That replaces the separate `devtools` site. GitHub Pages uses the repository
+name in the URL, so `freechie.github.io/devtools/` cannot be served from this
+repo.
+
 ## License
 
 MIT
