@@ -32,7 +32,8 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(octave
+   '(ruby
+     octave
      html
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
@@ -604,6 +605,15 @@ before packages are loaded."
               (visual-line-mode -1)
               (setq truncate-lines t
                     word-wrap nil)))
+  ;; Trackpad side-scroll arrives as wheel-left/wheel-right. Pass
+  ;; SET-MINIMUM so auto-hscroll does not snap back to point.
+  (defun dotfiles/wheel-scroll-left (&optional n)
+    (scroll-left n t))
+  (defun dotfiles/wheel-scroll-right (&optional n)
+    (scroll-right n t))
+  (setq mouse-wheel-tilt-scroll t
+        mwheel-scroll-left-function #'dotfiles/wheel-scroll-left
+        mwheel-scroll-right-function #'dotfiles/wheel-scroll-right)
   ;; Spacemacs auto-layer claims .m for Octave and still prompts after the
   ;; layer is removed. https://github.com/syl20bnr/spacemacs/issues/5634
   (setq auto-mode-alist
@@ -614,6 +624,10 @@ before packages are loaded."
          auto-mode-alist))
   (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
   (add-hook 'objc-mode-hook #'lsp)
+  ;; clangd adds an #include for whatever header defines a completed
+  ;; symbol, even internal ones like <_time.h>.
+  (setq lsp-clients-clangd-args
+        '("--header-insertion=never" "--header-insertion-decorators=0"))
   ;; RET indents, then clangd's on-type format can put point back in
   ;; front of that indent. Those spaces are trailing whitespace, so they
   ;; draw red, and typing inserts before them.
@@ -658,22 +672,24 @@ This function is called at the very end of Spacemacs initialization."
                  anaconda-mode anti-zenburn-theme apropospriate-theme auto-compile
                  auto-dark auto-highlight-symbol avy-jump-helm-line badwolf-theme
                  birds-of-paradise-plus-theme browse-at-remote bubbleberry-theme
-                 bui busybee-theme centered-cursor-mode cherry-blossom-theme
-                 chocolate-theme clean-aindent-mode clues-theme code-cells
-                 color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow
-                 column-enforce-mode company company-c-headers company-emoji
-                 company-web counsel counsel-css cpp-auto-include cyberpunk-theme
-                 cython-mode dakrone-theme dap-mode darkmine-theme darkokai-theme
-                 darktooth-theme define-word devdocs diff-hl diminish
-                 dired-quick-sort disable-mouse disaster django-theme doom-themes
-                 dotenv-mode dracula-theme drag-stuff dumb-jump edit-indirect
-                 ef-themes elisp-def elisp-demos elisp-slime-nav emmet-mode
-                 emoji-cheat-sheet-plus emr espresso-theme eval-sexp-fu evil-anzu
-                 evil-args evil-cleverparens evil-collection evil-easymotion
-                 evil-escape evil-evilified-state evil-exchange evil-goggles
-                 evil-iedit-state evil-indent-plus evil-lion evil-lisp-state
-                 evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-org
-                 evil-surround evil-textobj-line evil-tutor evil-unimpaired
+                 bui bundler busybee-theme centered-cursor-mode
+                 cherry-blossom-theme chocolate-theme chruby clean-aindent-mode
+                 clues-theme code-cells color-theme-sanityinc-solarized
+                 color-theme-sanityinc-tomorrow column-enforce-mode company
+                 company-c-headers company-emoji company-web counsel counsel-css
+                 cpp-auto-include cyberpunk-theme cython-mode dakrone-theme
+                 dap-mode darkmine-theme darkokai-theme darktooth-theme
+                 define-word devdocs diff-hl diminish dired-quick-sort
+                 disable-mouse disaster django-theme doom-themes dotenv-mode
+                 dracula-theme drag-stuff dumb-jump edit-indirect ef-themes
+                 elisp-def elisp-demos elisp-slime-nav emmet-mode
+                 emoji-cheat-sheet-plus emr enh-ruby-mode espresso-theme
+                 eval-sexp-fu evil-anzu evil-args evil-cleverparens
+                 evil-collection evil-easymotion evil-escape evil-evilified-state
+                 evil-exchange evil-goggles evil-iedit-state evil-indent-plus
+                 evil-lion evil-lisp-state evil-matchit evil-mc
+                 evil-nerd-commenter evil-numbers evil-org evil-surround
+                 evil-textobj-line evil-tutor evil-unimpaired
                  evil-visual-mark-mode evil-visualstar exotica-theme expand-region
                  eyebrowse eziam-themes fancy-battery farmhouse-themes
                  flatland-theme flatui-theme flycheck gandalf-theme gendoxy ggtags
@@ -685,11 +701,11 @@ This function is called at the very end of Spacemacs initialization."
                  helm-xref hemisu-theme heroku-theme hide-comnt
                  highlight-indentation highlight-numbers highlight-parentheses
                  hl-todo holy-mode htmlize hungry-delete hybrid-mode
-                 impatient-mode indent-guide info+ inkpot-theme inspector
+                 impatient-mode indent-guide inf-ruby info+ inkpot-theme inspector
                  ir-black-theme ivy jazz-theme jbeans-theme kaolin-themes
                  light-soap-theme link-hint live-py-mode lorem-ipsum lsp-docker
                  lush-theme macrostep madhat2r-theme markdown-mode markdown-toc
-                 material-theme minimal-theme mmt moe-theme molokai-theme
+                 material-theme minimal-theme minitest mmt moe-theme molokai-theme
                  monochrome-theme monokai-theme multi-line mustang-theme nameless
                  naquadah-theme noctilux-theme obsidian-theme occidental-theme
                  oldlace-theme omtose-phellack-themes open-junk-file org-cliplink
@@ -700,17 +716,19 @@ This function is called at the very end of Spacemacs initialization."
                  pip-requirements pipenv pippel planet-theme poetry popwin
                  prettier-js professional-theme pug-mode purple-haze-theme
                  py-isort pydoc pyenv-mode pylookup python-pytest quickrun
-                 railscasts-theme rainbow-delimiters rebecca-theme restart-emacs
-                 reverse-theme sass-mode scss-mode seti-theme simple-httpd
-                 slim-mode smyx-theme soft-charcoal-theme soft-morning-theme
-                 soft-stone-theme solarized-theme soothe-theme space-doc
-                 spacegray-theme spaceline spacemacs-purpose-popwin
-                 spacemacs-whitespace-cleanup sphinx-doc string-edit-at-point
-                 string-inflection subatomic-theme subatomic256-theme
-                 sublime-themes sudoku sunny-day-theme swiper symbol-overlay symon
-                 tagedit tango-2-theme tango-plus-theme tangotango-theme tao-theme
-                 term-cursor toc-org toxi-theme treemacs-evil treemacs-icons-dired
-                 treemacs-persp treemacs-projectile twilight-anti-bright-theme
+                 railscasts-theme rainbow-delimiters rake rbenv rebecca-theme
+                 restart-emacs reverse-theme robe rspec-mode rubocop rubocopfmt
+                 ruby-hash-syntax ruby-refactor ruby-test-mode ruby-tools rvm
+                 sass-mode scss-mode seti-theme simple-httpd slim-mode smyx-theme
+                 soft-charcoal-theme soft-morning-theme soft-stone-theme
+                 solarized-theme soothe-theme space-doc spacegray-theme spaceline
+                 spacemacs-purpose-popwin spacemacs-whitespace-cleanup sphinx-doc
+                 string-edit-at-point string-inflection subatomic-theme
+                 subatomic256-theme sublime-themes sudoku sunny-day-theme swiper
+                 symbol-overlay symon tagedit tango-2-theme tango-plus-theme
+                 tangotango-theme tao-theme term-cursor toc-org toxi-theme
+                 treemacs-evil treemacs-icons-dired treemacs-persp
+                 treemacs-projectile twilight-anti-bright-theme
                  twilight-bright-theme twilight-theme typit ujelly-theme
                  underwater-theme undo-fu-session uuidgen valign vi-tilde-fringe
                  vmd-mode volatile-highlights vundo web-beautify
