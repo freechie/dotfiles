@@ -589,16 +589,30 @@ MOCK
   [[ "$output" == *"reinstall merve node"* ]]
 }
 
-@test "installer unlinks openssl@1.1 before reinstalling a broken npm" {
+link_openssl11_through_opt() {
+  local prefix="$1"
+  local cellar="$prefix/Cellar/openssl@1.1/1.1.1w"
+
+  mkdir -p "$cellar/bin" "$prefix/bin" "$prefix/opt"
+  printf '#!/bin/sh\n' > "$cellar/bin/openssl"
+  chmod +x "$cellar/bin/openssl"
+  ln -sfn "$cellar" "$prefix/opt/openssl@1.1"
+  ln -sfn "$prefix/opt/openssl@1.1/bin/openssl" "$prefix/bin/openssl"
+}
+
+@test "installer removes an opt openssl@1.1 symlink before reinstalling a broken npm" {
   local prefix="$TEST_HOME/homebrew"
 
-  mkdir -p "$prefix/bin" "$prefix/opt/openssl@1.1/bin"
-  ln -s "$prefix/opt/openssl@1.1/bin/openssl" "$prefix/bin/openssl"
+  link_openssl11_through_opt "$prefix"
 
   cat > "$TEST_HOME/bin/npm" <<'MOCK'
 #!/bin/bash
-echo "broken npm" >&2
-exit 134
+if [[ -L "$HOME/homebrew/bin/openssl" ]]; then
+  echo "broken npm" >&2
+  exit 134
+fi
+echo "10.0.0"
+exit 0
 MOCK
   chmod +x "$TEST_HOME/bin/npm"
 
@@ -613,8 +627,8 @@ case "$*" in
     exit 0
     ;;
   "unlink openssl@1.1")
-    rm -f "$prefix/bin/openssl"
-    echo "Unlinked openssl@1.1"
+    echo "Unlinking openssl@1.1... 0 symlinks removed."
+    exit 0
     ;;
   "reinstall merve node")
     if [[ -L "$prefix/bin/openssl" ]]; then
@@ -631,13 +645,124 @@ esac
 MOCK
   chmod +x "$TEST_HOME/bin/brew"
 
+  cat > "$TEST_HOME/bin/nvim" <<'MOCK'
+#!/bin/bash
+echo "nvim should not run" >&2
+exit 1
+MOCK
+  chmod +x "$TEST_HOME/bin/nvim"
+
   run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" DOTFILES_PLATFORM=macos bash -c 'printf "y\n" | ./install.sh --skip-deps'
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"Unlinking openssl@1.1 so Homebrew can link openssl@3."* ]]
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Removing $TEST_HOME/homebrew/bin/openssl so Homebrew can link openssl@3."* ]]
   [[ "$output" == *"reinstall merve node"* ]]
+  [[ "$output" != *"0 symlinks removed"* ]]
   [[ "$output" != *"Homebrew node linkage repair failed"* ]]
   [[ "$output" != *"Could not symlink bin/openssl"* ]]
   [ ! -L "$prefix/bin/openssl" ]
+  [ -e "$prefix/Cellar/openssl@1.1/1.1.1w/bin/openssl" ]
+}
+
+@test "node linkage repair removes the openssl@1.1 symlink and exits 0" {
+  local prefix="$TEST_HOME/homebrew"
+
+  link_openssl11_through_opt "$prefix"
+
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "broken npm" >&2
+exit 134
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  cat > "$TEST_HOME/bin/brew" <<'MOCK'
+#!/bin/bash
+case "$*" in
+  "--prefix")
+    printf '%s\n' "$HOME/homebrew"
+    ;;
+  "list --formula merve")
+    exit 0
+    ;;
+  "unlink openssl@1.1")
+    echo "Unlinking openssl@1.1... 0 symlinks removed."
+    exit 0
+    ;;
+  "reinstall merve node")
+    echo "reinstall merve node"
+    ;;
+  *)
+    echo "unexpected brew $*" >&2
+    exit 1
+    ;;
+esac
+MOCK
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" bash -c 'source ./install.sh; repair_homebrew_node_linkage'
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"reinstall merve node"* ]]
+  [[ "$output" != *"0 symlinks removed"* ]]
+  [ ! -L "$prefix/bin/openssl" ]
+}
+
+@test "node linkage repair leaves bin/openssl that does not resolve into the openssl@1.1 cellar" {
+  local prefix="$TEST_HOME/homebrew"
+  local decoy="$TEST_HOME/decoy/openssl@1.1/bin"
+
+  mkdir -p "$decoy" "$prefix/bin"
+  printf '#!/bin/sh\n' > "$decoy/openssl"
+  chmod +x "$decoy/openssl"
+  ln -s "$decoy/openssl" "$prefix/bin/openssl"
+
+  cat > "$TEST_HOME/bin/brew" <<'MOCK'
+#!/bin/bash
+case "$*" in
+  "--prefix")
+    printf '%s\n' "$HOME/homebrew"
+    ;;
+  *)
+    echo "unexpected brew $*" >&2
+    exit 1
+    ;;
+esac
+MOCK
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" bash -c 'source ./install.sh; remove_openssl11_bin_symlink'
+  [ "$status" -eq 0 ]
+  [ -L "$prefix/bin/openssl" ]
+}
+
+@test "node linkage repair fails when the openssl@1.1 symlink cannot be removed" {
+  local prefix="$TEST_HOME/homebrew"
+
+  link_openssl11_through_opt "$prefix"
+
+  cat > "$TEST_HOME/bin/rm" <<'MOCK'
+#!/bin/bash
+exit 0
+MOCK
+  chmod +x "$TEST_HOME/bin/rm"
+
+  cat > "$TEST_HOME/bin/brew" <<'MOCK'
+#!/bin/bash
+case "$*" in
+  "--prefix")
+    printf '%s\n' "$HOME/homebrew"
+    ;;
+  *)
+    echo "unexpected brew $*" >&2
+    exit 1
+    ;;
+esac
+MOCK
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" bash -c 'source ./install.sh; remove_openssl11_bin_symlink'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"still blocks linking openssl@3"* ]]
+  [ -L "$prefix/bin/openssl" ]
 }
 
 @test "install.sh is idempotent" {
