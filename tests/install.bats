@@ -589,6 +589,57 @@ MOCK
   [[ "$output" == *"reinstall merve node"* ]]
 }
 
+@test "installer unlinks openssl@1.1 before reinstalling a broken npm" {
+  local prefix="$TEST_HOME/homebrew"
+
+  mkdir -p "$prefix/bin" "$prefix/opt/openssl@1.1/bin"
+  ln -s "$prefix/opt/openssl@1.1/bin/openssl" "$prefix/bin/openssl"
+
+  cat > "$TEST_HOME/bin/npm" <<'MOCK'
+#!/bin/bash
+echo "broken npm" >&2
+exit 134
+MOCK
+  chmod +x "$TEST_HOME/bin/npm"
+
+  cat > "$TEST_HOME/bin/brew" <<'MOCK'
+#!/bin/bash
+prefix="$HOME/homebrew"
+case "$*" in
+  "--prefix")
+    printf '%s\n' "$prefix"
+    ;;
+  "list --formula merve")
+    exit 0
+    ;;
+  "unlink openssl@1.1")
+    rm -f "$prefix/bin/openssl"
+    echo "Unlinked openssl@1.1"
+    ;;
+  "reinstall merve node")
+    if [[ -L "$prefix/bin/openssl" ]]; then
+      echo "Could not symlink bin/openssl" >&2
+      echo "Target $prefix/bin/openssl is a symlink belonging to openssl@1.1." >&2
+      exit 1
+    fi
+    echo "reinstall merve node"
+    ;;
+  *)
+    echo "Mock $0 $*"
+    ;;
+esac
+MOCK
+  chmod +x "$TEST_HOME/bin/brew"
+
+  run env HOME="$HOME" PATH="$TEST_HOME/bin:$PATH" DOTFILES_PLATFORM=macos bash -c 'printf "y\n" | ./install.sh --skip-deps'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unlinking openssl@1.1 so Homebrew can link openssl@3."* ]]
+  [[ "$output" == *"reinstall merve node"* ]]
+  [[ "$output" != *"Homebrew node linkage repair failed"* ]]
+  [[ "$output" != *"Could not symlink bin/openssl"* ]]
+  [ ! -L "$prefix/bin/openssl" ]
+}
+
 @test "install.sh is idempotent" {
   # First run
   run env DOTFILES_PLATFORM=macos bash -c 'echo "y" | ./install.sh'

@@ -726,13 +726,38 @@ install_zsh_extras() {
         install_omz_plugin "fzf-tab" "https://github.com/Aloxaf/fzf-tab"
 }
 
+# GitHub macOS images leave /opt/homebrew/bin/openssl owned by openssl@1.1.
+# Upgrading keg-only openssl@3 during `brew reinstall node` then exits 1 at
+# `brew link`, even after the bottles have been poured.
+unlink_openssl11_if_it_blocks_openssl3() {
+    local prefix openssl_bin target
+
+    prefix="$(brew --prefix 2>/dev/null || true)"
+    if [[ -z "$prefix" ]]; then
+        return 0
+    fi
+
+    openssl_bin="$prefix/bin/openssl"
+    if [[ ! -L "$openssl_bin" ]]; then
+        return 0
+    fi
+
+    target="$(readlink "$openssl_bin")"
+    if [[ "$target" != *"/openssl@1.1/"* ]]; then
+        return 0
+    fi
+
+    echo "Unlinking openssl@1.1 so Homebrew can link openssl@3."
+    brew unlink openssl@1.1
+}
+
 repair_homebrew_node_linkage() {
     if is_ci_smoke_install; then
         return 0
     fi
 
     if [[ -n "$DRY_RUN" ]]; then
-        echo "DRY RUN: brew list --formula merve node; npm -v; brew reinstall merve node if npm cannot start"
+        echo "DRY RUN: brew list --formula merve node; npm -v; brew unlink openssl@1.1 when it owns bin/openssl; brew reinstall merve node if npm cannot start"
         return 0
     fi
 
@@ -751,6 +776,7 @@ repair_homebrew_node_linkage() {
     echo "npm is not runnable; reinstalling Homebrew merve and node for the current simdutf library."
     (
         unset HOMEBREW_NO_AUTO_UPDATE HOMEBREW_NO_INSTALL_UPGRADE
+        unlink_openssl11_if_it_blocks_openssl3
         brew reinstall merve node
     )
 }
