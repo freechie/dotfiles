@@ -20,3 +20,6 @@ source "$DOTFILES_ROOT/shell/zsh/aliases.zsh"
 source "$DOTFILES_ROOT/shell/zsh/functions.zsh"
 source "$DOTFILES_ROOT/shell/zsh/integrations.zsh"
 source "$DOTFILES_ROOT/shell/zsh/lang-managers.zsh"
+
+# Installers prepend the same dirs again. Keep the first copy, which is the one that wins.
+typeset -U path
