@@ -4,6 +4,16 @@
 # These tests don't execute anything — just check that references between
 # files are valid. Fast, deterministic, no dependencies.
 
+@test "windows installer covers PowerShell editor setup" {
+  grep -q 'Neovim.Neovim' install.ps1
+  grep -q 'GNU.Emacs' install.ps1
+  grep -q 'LOCALAPPDATA' install.ps1
+  grep -q 'Microsoft.PowerShell_profile.ps1' install.ps1
+  grep -q 'os = "unix"' starship.toml
+  grep -q 'os = "windows"' starship.toml
+  grep -q 'core.platform.windows' nvim/lua/core/platform/init.lua
+}
+
 @test "gitconfig excludesFile matches gitignore_global" {
   # Parse the excludesFile value from .gitconfig
   run grep 'excludesFile' .gitconfig
@@ -49,6 +59,12 @@
     "tmux/linux.conf"
     "emacs/.spacemacs"
     "emacs/local.el"
+    "emacs/darwin.el"
+    "emacs/windows.el"
+    "emacs/windows-early-init.el"
+    "install.ps1"
+    "platforms/windows/Microsoft.PowerShell_profile.ps1"
+    "nvim/lua/core/platform/windows.lua"
   )
 
   for f in "${expected[@]}"; do

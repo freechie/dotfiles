@@ -1,13 +1,14 @@
 ;; -*- lexical-binding: t; -*-
-(setq org-agenda-files
-      '("/Users/what/Sites/intro-to-algorithms/study/STUDY.org"))
-(setq org-capture-templates
-      '(("p" "Post-mortem" entry
-         (file+headline "/Users/what/Sites/intro-to-algorithms/study/log.org" "Post-mortems")
-         (file "/Users/what/Sites/intro-to-algorithms/notes/org-templates/post-mortem.org"))
-        ("o" "Outreach" entry
-         (file "/Users/what/Sites/intro-to-algorithms/notes/companies.org")
-         (file "/Users/what/Sites/intro-to-algorithms/notes/org-templates/outreach.org"))
-        ("d" "6.006 day" entry
-         (file+headline "/Users/what/Sites/intro-to-algorithms/study/log.org" "Progress")
-         (file "/Users/what/Sites/intro-to-algorithms/study/org-templates/day.org"))))
+;; Loads the Spacemacs file for this operating system.
+;; darwin.el and windows.el sit next to this file, both in the repo and
+;; in ~/.spacemacs.d after install.
+
+(let* ((dir (file-name-directory
+             (or load-file-name
+                 (buffer-file-name)
+                 (expand-file-name "~/.spacemacs.d/local.el"))))
+       (name (cond ((eq system-type 'windows-nt) "windows.el")
+                   ((eq system-type 'darwin) "darwin.el")))
+       (file (and name (expand-file-name name dir))))
+  (when (and file (file-readable-p file))
+    (load file nil t)))

@@ -46,6 +46,7 @@ This function should only modify configuration layer settings."
      helm
      markdown
      c-c++
+     lua
      multiple-cursors
      org
      (python :variables
@@ -57,7 +58,9 @@ This function should only modify configuration layer settings."
             shell-default-position 'bottom)
      spell-checking
      syntax-checking
-     themes-megapack
+     ;; Disabled so its theme packages are not configured at startup.
+     ;; Uncomment and restart when you want the mega-pack again.
+     ;; themes-megapack
      version-control
      treemacs)
 
@@ -236,8 +239,9 @@ It should only modify the values of Spacemacs settings."
    ;; `fixed-pitch' faces. The `:size' can be specified as
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
+   ;; Windows overrides the size in emacs/windows.el.
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 17.0
+                               :size 12.0
                                :weight normal
                                :width normal)
 
@@ -576,7 +580,12 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-  )
+  ;; emacs/local.el loads emacs/darwin.el or emacs/windows.el.
+  ;; Windows font, quickstart, and frame settings must be set here, before
+  ;; Spacemacs applies the default font and installs packages.
+  (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
+    (when (file-readable-p local)
+      (load local nil t))))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -592,11 +601,6 @@ before packages are loaded."
                      (#xf0000 . #xffffd)
                      (#x100000 . #x10fffd)))
       (set-fontset-font t range icon-font nil 'prepend)))
-  (use-package auto-dark
-    :init (spacemacs/defer-until-after-user-config #'auto-dark-mode)
-    :config
-    (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light)))
-    :defer t)
   ;; Scroll long lines horizontally instead of wrapping them.
   (setq-default truncate-lines t
                 word-wrap nil)
@@ -648,10 +652,7 @@ before packages are loaded."
             #'dotfiles/lsp-newline-leave-point-after-indent)
   ;; "fd" leaves insert mode, which eats the letters in "fd" while typing.
   (with-eval-after-load 'evil-escape
-    (evil-escape-mode -1))
-  (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
-    (when (file-readable-p local)
-      (load local nil t))))
+    (evil-escape-mode -1)))
 
 
 ;; Do not write anything past this comment. This is where Emacs will

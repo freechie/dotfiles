@@ -541,6 +541,8 @@ MOCK
     "tmux/linux.conf"
     "emacs/.spacemacs"
     "emacs/local.el"
+    "emacs/darwin.el"
+    "emacs/windows.el"
   )
 
   for f in "${expected[@]}"; do

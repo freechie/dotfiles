@@ -1,0 +1,2 @@
+-- Windows-specific Neovim hooks live here.
+-- common.lua already disables providers that are not installed.

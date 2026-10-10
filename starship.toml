@@ -16,7 +16,16 @@ show_always = true
 disabled = true
 
 [custom.host]
+os = "unix"
 command = "hostname | cut -d. -f1 | cut -c1-3"
+when = true
+style = "cyan"
+format = "[$output]($style)"
+
+[custom.hostwin]
+os = "windows"
+shell = ["cmd", "/V:ON", "/C"]
+command = "for /f %h in ('hostname') do @set h=%h&& echo !h:~0,3!"
 when = true
 style = "cyan"
 format = "[$output]($style)"

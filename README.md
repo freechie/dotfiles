@@ -33,8 +33,9 @@
 [![LazyGit](https://img.shields.io/badge/LazyGit-0A60C8)](https://github.com/jesseduffield/lazygit)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/)
 
-Terminal-focused dotfiles for macOS and Ubuntu/Linux. Includes Zsh, Bash,
-tmux, Neovim, Ghostty, Starship, Git config, installer scripts, and CI checks.
+Terminal-focused dotfiles for macOS, Ubuntu/Linux, and Windows PowerShell.
+Includes Zsh, Bash, tmux, Neovim, Spacemacs, Ghostty, Starship, Git config,
+installer scripts, and CI checks.
 
 ## Install
 
@@ -50,6 +51,21 @@ Useful modes:
 ./install.sh --dry-run    # show planned changes only
 ./install.sh --skip-deps  # skip Homebrew, apt, and the Linux Neovim install
 ```
+
+Windows uses PowerShell 7, not `install.sh`:
+
+```powershell
+git clone https://github.com/freechie/dotfiles.git $HOME\dotfiles
+cd $HOME\dotfiles
+./install.ps1
+./install.ps1 -DryRun
+./install.ps1 -SkipDeps
+```
+
+`install.ps1` links Neovim, Starship, Spacemacs, and the PowerShell profile.
+It installs the Windows editor and CLI packages with winget. Zsh, tmux, and
+Ghostty are left for macOS and Ubuntu. `.gitconfig` is not linked because it
+turns on commit signing with a macOS key path.
 
 The installer backs up replaced files to `~/dotfiles_backup_<timestamp>` and
 then creates symlinks for the tracked configs. It validates the platform and
@@ -71,6 +87,7 @@ editor helpers when their package managers are already available.
 - macOS: installs core Homebrew dependencies from `Brewfile`.
 - Ubuntu/Linux: installs core packages with `apt` and a pinned upstream Neovim
   release into `~/.local`.
+- Windows: `./install.ps1`. See [Windows](#windows).
 
 Linux support is Ubuntu/Debian-first. Other distributions should install
 equivalent packages manually, then use `./install.sh --skip-deps`.
@@ -96,12 +113,58 @@ brew tap d12frosted/emacs-plus
 brew bundle --file=Brewfile.personal-macos
 ```
 
+## Windows
+
+PowerShell 7 is the shell. `platforms/windows/Microsoft.PowerShell_profile.ps1`
+is linked to the PowerShell 7 profile. It sets `HOME` when that variable is
+empty, prepends Neovim and Emacs to `PATH`, and sets `EDITOR` to `nvim`.
+Starship and zoxide initialize when those commands exist.
+
+`./install.ps1` installs Neovim, Emacs, Starship, ripgrep, fd, fzf, zoxide,
+eza, lazygit, and Node with winget, then links:
+
+- `%LOCALAPPDATA%\nvim` to `nvim/`
+- `~/.spacemacs`, `~/.spacemacs.d/local.el`, `darwin.el`, and `windows.el`
+- `~/.config/starship.toml`
+- the PowerShell profile
+
+`.gitconfig` stays unlinked. Its commit signing key is a macOS path. Zsh,
+tmux, and Ghostty stay on macOS and Ubuntu.
+
+Neovim parser builds use MinGW. Set the user `CC` variable to the full path of
+`x86_64-w64-mingw32-gcc.exe` from the WinLibs package. Neovim must find
+`tree-sitter.exe` on `PATH`; the npm `.cmd` shim is not executable from the
+editor. Windows hooks live in `nvim/lua/core/platform/windows.lua`.
+
+Spacemacs uses Source Code Pro. macOS keeps 17pt in `emacs/.spacemacs`.
+Windows uses 13pt from `emacs/windows.el`. Icons use FiraCode Nerd Font Mono.
+From an elevated PowerShell:
+
+```powershell
+choco install SourceCodePro nerd-fonts-FiraCode -y
+```
+
+`emacs/.spacemacs` is shared. `emacs/local.el` loads `emacs/darwin.el` or
+`emacs/windows.el`. The macOS file keeps the Org paths under `/Users/what`
+and lets `auto-dark` pick the Mac detector. The Windows file sets the smaller
+font, package quickstart, the Org reinstall guard, frame resize, and
+`auto-dark` with the Windows registry. Quit Emacs and start it again after
+changing those. `SPC q R` does not reread early frame setup.
+
+`~/.emacs.d` is the Spacemacs `develop` clone. `emacs/windows-early-init.el`
+is appended to its `early-init.el` by `./install.ps1`, because Emacs reads
+that file before `.spacemacs` and a Spacemacs update can replace it. The
+block is skipped on macOS.
+
+Starship prints the short hostname from `[custom.hostwin]` in `starship.toml`.
+`[custom.host]` is Unix-only.
+
 ## What Is Managed
 
 - Shell: `.zshrc`, `.bash_profile`, shared modules in `shell/`
 - tmux: `.tmux.conf`, platform overrides in `tmux/`
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
-- Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`) and `emacs/local.el` (linked to `~/.spacemacs.d/local.el`). `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
+- Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`). `emacs/local.el` loads `emacs/darwin.el` on macOS and `emacs/windows.el` on Windows. `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
 - Ghostty: platform configs in `ghostty/`
 - Starship: `starship.toml` (platform paths under `platforms/` are symlinks to it)
 - Git: `.gitconfig`, `.gitignore_global`
