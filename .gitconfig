@@ -1,7 +1,7 @@
 [user]
 	email = 4448701+freechie@users.noreply.github.com
 	name = John
-	signingkey = /Users/what/.ssh/id_ed25519_github_signing.pub
+	signingkey = /home/what/.ssh/id_ed25519.pub
 
 [core]
 	editor = nvim
