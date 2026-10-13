@@ -21,21 +21,3 @@ export PYENV_ROOT="$HOME/.pyenv"
 if command -v pyenv >/dev/null 2>&1; then
     eval "$(pyenv init - bash)"
 fi
-. "$HOME/.cargo/env"
-
-# >>> juliaup initialize >>>
-
-# !! Contents within this block are managed by juliaup !!
-
-case ":$PATH:" in
-    *:/home/what/.juliaup/bin:*)
-        ;;
-
-    *)
-        export PATH=/home/what/.juliaup/bin${PATH:+:${PATH}}
-        ;;
-esac
-# Tab completion for juliaup and julia channel selection
-[ -f "/home/what/.julia/juliaup/completions/bash.sh" ] && source "/home/what/.julia/juliaup/completions/bash.sh"
-
-# <<< juliaup initialize <<<
