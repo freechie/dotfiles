@@ -218,6 +218,9 @@ confirm_proceed() {
     echo "$step. Backup existing dotfiles to $olddir."
     ((step++))
     echo "$step. Create symlinks for zsh, tmux, nvim, etc."
+    if dotfiles_is_macos; then
+        echo "   Stage Rectangle Pro config for its next launch."
+    fi
     ((step++))
     if should_manage_dependencies; then
         if dotfiles_is_macos; then
@@ -1146,6 +1149,11 @@ validate_link_sources() {
         fi
     done
 
+    if [[ ! -f "$dir/RectangleProConfig.json" ]]; then
+        echo "Missing link source: $dir/RectangleProConfig.json" >&2
+        failures=1
+    fi
+
     return "$failures"
 }
 
@@ -1172,12 +1180,43 @@ ensure_symlink() {
     fi
 }
 
+install_rectangle_pro_config() {
+    local source_file="$dir/RectangleProConfig.json"
+    local target_dir="$HOME/Library/Application Support/Rectangle Pro"
+    local target_file="$target_dir/RectangleProConfig.json"
+
+    if ! dotfiles_is_macos; then
+        return 0
+    fi
+
+    if [[ ! -f "$source_file" ]]; then
+        echo "Missing link source: $source_file" >&2
+        return 1
+    fi
+
+    if [[ -f "$target_file" ]] && cmp -s "$source_file" "$target_file"; then
+        echo "Rectangle Pro config is already staged for import."
+        return 0
+    fi
+
+    if [[ -e "$target_file" && ! -L "$target_file" ]]; then
+        echo "Backing up existing Rectangle Pro config to $olddir"
+        run_cmd mv "$target_file" "$olddir/"
+    fi
+
+    echo "Staging Rectangle Pro config for import on its next launch."
+    run_cmd mkdir -p "$target_dir"
+    run_cmd cp "$source_file" "$target_file"
+}
+
 install_links() {
     local spec relative_source target_link label
     for spec in "${link_specs[@]}"; do
         IFS='|' read -r relative_source target_link label <<< "$spec"
         ensure_symlink "$relative_source" "$target_link" "$label"
     done
+
+    install_rectangle_pro_config
 }
 
 install_pynvim_provider() {

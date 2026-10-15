@@ -543,6 +543,7 @@ MOCK
     "emacs/local.el"
     "emacs/darwin.el"
     "emacs/windows.el"
+    "RectangleProConfig.json"
   )
 
   for f in "${expected[@]}"; do
