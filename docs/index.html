@@ -33,12 +33,15 @@
           <li><code>ls</code><p class="item-meta">eza with icons. No git status.</p></li>
           <li><code>ll</code><p class="item-meta">eza with icons, git status, and details.</p></li>
           <li><code>la</code><p class="item-meta">Same as ll, including dotfiles.</p></li>
-          <li><code>cd</code><p class="item-meta">zoxide. Plain cd is the z command.</p></li>
+          <li><code>cd</code><p class="item-meta">Aliased to zoxide's z command when zoxide is installed.</p></li>
           <li><code>cat</code><p class="item-meta">bat, when it is installed.</p></li>
+          <li><code>mkcd DIR</code><p class="item-meta">Create a directory and enter it.</p></li>
+          <li><code>fff</code><p class="item-meta">Open the fff MCP file manager.</p></li>
           <li><code>reload</code><p class="item-meta">Source ~/.zshrc in this shell.</p></li>
-          <li><code>ta</code><p class="item-meta">Attach to a tmux session, or start one.</p></li>
-          <li><code>update</code><p class="item-meta">macOS software update, Homebrew upgrade, and Oh My Zsh.</p></li>
+          <li><code>ta</code><p class="item-meta">Attach to the first tmux session, or start one.</p></li>
+          <li><code>update</code><p class="item-meta">macOS: system, Homebrew, and Oh My Zsh. Linux: apt and Oh My Zsh.</p></li>
           <li><code>bbu</code><p class="item-meta">Write Brewfile.snapshot. It does not edit the tracked Brewfiles.</p></li>
+          <li><code>gscan [since] [limit]</code><p class="item-meta">Summarize repo churn, authors, bug hotspots, velocity, and firefighting signals.</p></li>
         </ul>
       </section>
 
@@ -48,9 +51,98 @@
           <li><code>gs</code><p class="item-meta">git status -sb.</p></li>
           <li><code>gl</code><p class="item-meta">One-line graph of all branches.</p></li>
           <li><code>gp</code><p class="item-meta">git push.</p></li>
+          <li><code>gpf</code><p class="item-meta">git push --force-with-lease.</p></li>
           <li><code>gpl</code><p class="item-meta">git pull --rebase --autostash.</p></li>
+          <li><code>gaa</code><p class="item-meta">Stage every change in the repository.</p></li>
           <li><code>gc</code><p class="item-meta">git commit -m. Pass the message in quotes.</p></li>
           <li><code>lg</code><p class="item-meta">Open LazyGit.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Spacemacs</h2>
+        <p class="lead">Hybrid editing: leader is <code>SPC</code> in normal state and <code>M-m</code> in insert or Emacs state. <code>,</code> opens mode-specific commands.</p>
+        <p class="feature-summary">Configured with Helm, Treemacs, Ghostel, Org capture and agenda, Python LSP with Pyright, auto-completion, syntax and spell checking, Git VC, and automatic light/dark themes.</p>
+
+        <h3>Core</h3>
+        <ul class="items">
+          <li><kbd>SPC SPC</kbd><p class="item-meta">Helm command menu. This is M-x.</p></li>
+          <li><kbd>SPC '</kbd><p class="item-meta">Popup Ghostel. TERM is xterm-ghostty.</p></li>
+          <li><kbd>SPC TAB</kbd><p class="item-meta">Switch to the previous buffer.</p></li>
+          <li><kbd>SPC T n</kbd><p class="item-meta">Cycle the configured Spacemacs themes manually.</p></li>
+          <li><kbd>SPC q R</kbd><p class="item-meta">Restart Emacs so startup settings apply.</p></li>
+        </ul>
+
+        <h3>Files and projects</h3>
+        <ul class="items">
+          <li><kbd>SPC f f</kbd><p class="item-meta">Find a file with Helm.</p></li>
+          <li><kbd>SPC f r</kbd><p class="item-meta">Open a recent file.</p></li>
+          <li><kbd>SPC /</kbd><p class="item-meta">Search the current project.</p></li>
+          <li><kbd>SPC p f</kbd><p class="item-meta">Find a file in the current project.</p></li>
+          <li><kbd>SPC p p</kbd><p class="item-meta">Switch projects.</p></li>
+          <li><kbd>SPC f t</kbd><p class="item-meta">Open the Treemacs file tree.</p></li>
+          <li><kbd>SPC p t</kbd><p class="item-meta">Toggle the current project in Treemacs.</p></li>
+        </ul>
+
+        <h3>Buffers and windows</h3>
+        <ul class="items">
+          <li><kbd>SPC b b</kbd><p class="item-meta">Helm mini: buffers, recent files, and related sources.</p></li>
+          <li><kbd>C-c d</kbd><p class="item-meta">In that list, kill the highlighted buffer and stay open.</p></li>
+          <li><kbd>SPC b d</kbd><p class="item-meta">Kill the current buffer.</p></li>
+          <li><span><kbd>SPC w /</kbd> / <kbd>SPC w -</kbd></span><p class="item-meta">Split the window right or below.</p></li>
+          <li><span><kbd>SPC w h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between windows.</p></li>
+          <li><kbd>SPC w m</kbd><p class="item-meta">Maximize or restore the current window.</p></li>
+          <li><kbd>SPC w d</kbd><p class="item-meta">Delete the current window.</p></li>
+        </ul>
+
+        <h3>Org, code, and configuration</h3>
+        <ul class="items">
+          <li><kbd>SPC a o c</kbd><p class="item-meta">Start Org capture. macOS templates: p post-mortem, o outreach, d study day.</p></li>
+          <li><kbd>SPC a o a</kbd><p class="item-meta">Open the Org agenda list.</p></li>
+          <li><span><kbd>, g d</kbd> / <kbd>, g r</kbd></span><p class="item-meta">With LSP active, find a definition or references.</p></li>
+          <li><span><kbd>, a a</kbd> / <kbd>, r r</kbd></span><p class="item-meta">Run an LSP code action or rename a symbol.</p></li>
+          <li><kbd>, = b</kbd><p class="item-meta">Format the current buffer with LSP.</p></li>
+          <li><span><kbd>SPC e n</kbd> / <kbd>SPC e p</kbd></span><p class="item-meta">Jump to the next or previous error.</p></li>
+          <li><kbd>SPC e l</kbd><p class="item-meta">Toggle the Flycheck error list.</p></li>
+          <li><kbd>SPC g v</kbd><p class="item-meta">Open the built-in version-control command prefix.</p></li>
+          <li><kbd>SPC f e d</kbd><p class="item-meta">Open ~/.spacemacs for editing.</p></li>
+          <li><kbd>SPC f e R</kbd><p class="item-meta">Sync layers and reload the Spacemacs configuration.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Neovim</h2>
+        <p class="lead">Leader is <code>Space</code>.</p>
+        <ul class="items">
+          <li><kbd>Space w</kbd><p class="item-meta">Save the file.</p></li>
+          <li><kbd>Space q</kbd><p class="item-meta">Close the window.</p></li>
+          <li><kbd>Space Q</kbd><p class="item-meta">Force-quit Neovim and every open buffer.</p></li>
+          <li><kbd>Space e</kbd><p class="item-meta">Toggle the file tree.</p></li>
+          <li><kbd>Space ff</kbd><p class="item-meta">Fuzzy file search.</p></li>
+          <li><kbd>Space fg</kbd><p class="item-meta">Live grep in the project.</p></li>
+          <li><kbd>Space fb</kbd><p class="item-meta">Switch buffer.</p></li>
+          <li><kbd>Space fo</kbd><p class="item-meta">Reopen a recent file.</p></li>
+          <li><kbd>Space cf</kbd><p class="item-meta">Format the buffer.</p></li>
+          <li><kbd>Space gg</kbd><p class="item-meta">Open LazyGit.</p></li>
+          <li><span><kbd>Space gd</kbd> / <kbd>gh</kbd></span><p class="item-meta">Open Diffview or the current file's Git history.</p></li>
+          <li><kbd>Space xx</kbd><p class="item-meta">Open project diagnostics in Trouble.</p></li>
+          <li><span><kbd>gd</kbd> / <kbd>gr</kbd> / <kbd>K</kbd></span><p class="item-meta">LSP definition, references, or hover documentation.</p></li>
+          <li><span><kbd>Space ca</kbd> / <kbd>Space rn</kbd></span><p class="item-meta">LSP code action or symbol rename.</p></li>
+          <li><span><kbd>[d</kbd> / <kbd>]d</kbd></span><p class="item-meta">Previous or next diagnostic.</p></li>
+          <li><span><kbd>Ctrl-h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between Neovim windows and tmux panes.</p></li>
+          <li><kbd>Ctrl-\</kbd><p class="item-meta">Toggle the floating terminal.</p></li>
+          <li><kbd>Space Space</kbd><p class="item-meta">Clear the search highlight.</p></li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Ghostty</h2>
+        <ul class="items">
+          <li><kbd>Cmd+`</kbd><p class="item-meta">Toggle the quick terminal.</p></li>
+          <li><span><kbd>Cmd+Opt+h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between splits on macOS.</p></li>
+          <li><span><kbd>Ctrl+Alt+h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between splits on Linux.</p></li>
+          <li><span>Right-click</span><p class="item-meta">Paste.</p></li>
+          <li><span>Select</span><p class="item-meta">Copy the selection.</p></li>
         </ul>
       </section>
 
@@ -67,50 +159,8 @@
           <li><kbd>C-a m</kbd><p class="item-meta">Zoom the current pane.</p></li>
           <li><span><kbd>C-a H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd></span><p class="item-meta">Resize the pane by 5 cells.</p></li>
           <li><kbd>C-a C-j</kbd><p class="item-meta">fzf list of other sessions.</p></li>
+          <li><kbd>C-a I</kbd><p class="item-meta">Install tmux plugins with TPM.</p></li>
           <li><span><kbd>v</kbd> then <kbd>y</kbd></span><p class="item-meta">In copy mode, select and copy.</p></li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Neovim</h2>
-        <p class="lead">Leader is <code>Space</code>.</p>
-        <ul class="items">
-          <li><kbd>Space w</kbd><p class="item-meta">Save the file.</p></li>
-          <li><kbd>Space q</kbd><p class="item-meta">Close the window.</p></li>
-          <li><kbd>Space Q</kbd><p class="item-meta">Force-quit every window.</p></li>
-          <li><kbd>Space e</kbd><p class="item-meta">Toggle the file tree.</p></li>
-          <li><kbd>Space ff</kbd><p class="item-meta">Fuzzy file search.</p></li>
-          <li><kbd>Space fg</kbd><p class="item-meta">Live grep in the project.</p></li>
-          <li><kbd>Space fb</kbd><p class="item-meta">Switch buffer.</p></li>
-          <li><kbd>Space fo</kbd><p class="item-meta">Reopen a recent file.</p></li>
-          <li><kbd>Space cf</kbd><p class="item-meta">Format the buffer.</p></li>
-          <li><kbd>Space gg</kbd><p class="item-meta">Open LazyGit.</p></li>
-          <li><span><kbd>[d</kbd> / <kbd>]d</kbd></span><p class="item-meta">Previous or next diagnostic.</p></li>
-          <li><kbd>Space Space</kbd><p class="item-meta">Clear the search highlight.</p></li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Ghostty</h2>
-        <ul class="items">
-          <li><kbd>Cmd+`</kbd><p class="item-meta">Toggle the quick terminal.</p></li>
-          <li><span><kbd>Cmd+Opt+h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd></span><p class="item-meta">Move between splits.</p></li>
-          <li><span>Right-click</span><p class="item-meta">Paste.</p></li>
-          <li><span>Select</span><p class="item-meta">Copy the selection.</p></li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Spacemacs</h2>
-        <p class="lead">Leader is <code>SPC</code>. Press <code>ESC</code> first if a key does nothing.</p>
-        <ul class="items">
-          <li><kbd>SPC SPC</kbd><p class="item-meta">Helm command menu. This is M-x.</p></li>
-          <li><kbd>SPC '</kbd><p class="item-meta">Popup Ghostel. TERM is xterm-ghostty.</p></li>
-          <li><kbd>SPC b b</kbd><p class="item-meta">Helm buffer list.</p></li>
-          <li><kbd>C-c d</kbd><p class="item-meta">In that list, kill the highlighted buffer and stay open.</p></li>
-          <li><kbd>SPC b d</kbd><p class="item-meta">Kill the current buffer.</p></li>
-          <li><kbd>SPC f e R</kbd><p class="item-meta">Reload ~/.spacemacs after an edit.</p></li>
-          <li><kbd>SPC q R</kbd><p class="item-meta">Restart Emacs so startup settings apply.</p></li>
         </ul>
       </section>
     </main>

@@ -89,9 +89,20 @@ h2 {
   margin: 2rem 0 0.6rem;
 }
 
+h3 {
+  font-size: 0.9rem;
+  font-weight: 650;
+  margin: 1.25rem 0 0.45rem;
+}
+
 .lead {
   color: var(--dim);
   margin: 0;
+}
+
+.feature-summary {
+  color: var(--dim);
+  margin: 0.75rem 0 0;
 }
 
 a {
@@ -127,4 +138,11 @@ kbd {
 .item-meta {
   color: var(--dim);
   margin: 0;
+}
+
+@media (max-width: 34rem) {
+  .items li {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
 }
