@@ -75,7 +75,7 @@ MOCK
 setup_macos_minimal_path() {
   local cmd
 
-  for cmd in bash date dirname ln mkdir mv pwd readlink; do
+  for cmd in bash cmp cp date dirname ln mkdir mv pwd readlink; do
     link_host_cmd "$cmd"
   done
 
