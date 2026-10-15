@@ -139,6 +139,7 @@ Starship prints the short hostname from `[custom.hostwin]` in `starship.toml`.
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
 - Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`). `emacs/local.el` loads `emacs/darwin.el` on macOS and `emacs/windows.el` on Windows. `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
 - Ghostty: platform configs in `ghostty/`
+- Rectangle Pro: `RectangleProConfig.json`. On macOS, the installer copies it to `~/Library/Application Support/Rectangle Pro/RectangleProConfig.json`. Rectangle Pro imports that copy on its next launch and then renames it.
 - Starship: `starship.toml` (platform paths under `platforms/` are symlinks to it)
 - Git: `.gitconfig`, `.gitignore_global`
 

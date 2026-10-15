@@ -230,6 +230,8 @@ EOF
   [[ "$(readlink "$HOME/.spacemacs.d/local.el")" == "$dir/emacs/local.el" ]]
   [ -L "$HOME/Library/Application Support/com.mitchellh.ghostty/config" ]
   [[ "$(readlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config")" == "$dir/ghostty/config.macos" ]]
+  [ -f "$HOME/Library/Application Support/Rectangle Pro/RectangleProConfig.json" ]
+  cmp -s "$dir/RectangleProConfig.json" "$HOME/Library/Application Support/Rectangle Pro/RectangleProConfig.json"
 }
 
 @test "install.sh backups existing files correctly" {
@@ -375,6 +377,7 @@ EOF
   [[ "$(readlink "$HOME/.spacemacs")" == "$dir/emacs/.spacemacs" ]]
   [ -L "$HOME/.spacemacs.d/local.el" ]
   [[ "$(readlink "$HOME/.spacemacs.d/local.el")" == "$dir/emacs/local.el" ]]
+  [ ! -e "$HOME/Library/Application Support/Rectangle Pro/RectangleProConfig.json" ]
 }
 
 @test "install.sh backs up existing .config files correctly" {
