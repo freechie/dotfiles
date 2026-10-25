@@ -241,7 +241,7 @@ It should only modify the values of Spacemacs settings."
    ;; Point size is recommended, because it's device independent. (default 10.0)
    ;; Windows overrides the size in emacs/windows.el.
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 12.0
+                               :size 14.0
                                :weight normal
                                :width normal)
 

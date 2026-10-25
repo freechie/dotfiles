@@ -64,6 +64,7 @@
     "emacs/darwin.el"
     "emacs/windows.el"
     "emacs/windows-early-init.el"
+    "RectangleProConfig.json"
     "install.ps1"
     "platforms/windows/Microsoft.PowerShell_profile.ps1"
     "nvim/lua/core/platform/windows.lua"

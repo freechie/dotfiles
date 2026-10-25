@@ -1,37 +1,10 @@
 # Dotfiles
 
-[![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)](https://support.apple.com/guide/mac-help/welcome/mac)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white)](https://documentation.ubuntu.com/)
-[![Zsh](https://img.shields.io/badge/Zsh-F15A24?logo=gnubash&logoColor=white)](https://zsh.sourceforge.io/Doc/)
-[![Bash](https://img.shields.io/badge/Bash-4EAA25?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/manual/)
-[![tmux](https://img.shields.io/badge/tmux-1BB91F?logo=tmux&logoColor=white)](https://github.com/tmux/tmux/wiki)
-[![Neovim](https://img.shields.io/badge/Neovim-57A143?logo=neovim&logoColor=white)](https://neovim.io/doc/)
-[![Spacemacs](https://img.shields.io/badge/Spacemacs-9266CC?logo=emacs&logoColor=white)](https://www.spacemacs.org/doc/DOCUMENTATION.html)
-[![Emacs](https://img.shields.io/badge/Emacs-7F5AB6?logo=gnuemacs&logoColor=white)](https://www.gnu.org/software/emacs/manual/)
-[![Ghostty](https://img.shields.io/badge/Ghostty-2E2E2E?logo=ghost&logoColor=white)](https://ghostty.org/docs)
-[![Starship](https://img.shields.io/badge/Starship-DD0B64?logo=starship&logoColor=white)](https://starship.rs/guide/)
-[![Git](https://img.shields.io/badge/Git-F05032?logo=git&logoColor=white)](https://git-scm.com/doc)
-[![Homebrew](https://img.shields.io/badge/Homebrew-FBB040?logo=homebrew&logoColor=black)](https://docs.brew.sh/)
-[![apt](https://img.shields.io/badge/apt-A80030?logo=debian&logoColor=white)](https://manpages.ubuntu.com/manpages/noble/en/man8/apt.8.html)
-[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](https://docs.github.com/en/actions)
-[![Bats](https://img.shields.io/badge/Bats-1D4ED8)](https://bats-core.readthedocs.io/en/stable/)
-[![fzf](https://img.shields.io/badge/fzf-000000)](https://junegunn.github.io/fzf/)
-[![ripgrep](https://img.shields.io/badge/ripgrep-A8B9CC)](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md)
-[![fd](https://img.shields.io/badge/fd-0F766E)](https://github.com/sharkdp/fd#how-to-use)
-[![eza](https://img.shields.io/badge/eza-87FFAF)](https://github.com/eza-community/eza/blob/main/man/eza.1.md)
-[![zoxide](https://img.shields.io/badge/zoxide-5B21B6)](https://github.com/ajeetdsouza/zoxide)
-[![Lazy.nvim](https://img.shields.io/badge/Lazy.nvim-457B9D)](https://lazy.folke.io/)
-[![Mason](https://img.shields.io/badge/Mason-1D4ED8)](https://github.com/mason-org/mason.nvim)
-[![Lua](https://img.shields.io/badge/Lua-2C2D72?logo=lua&logoColor=white)](https://www.lua.org/manual/5.4/)
-[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://docs.python.org/3/)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/docs/latest/api/)
-[![Ruby](https://img.shields.io/badge/Ruby-CC342D?logo=ruby&logoColor=white)](https://docs.ruby-lang.org/en/)
-[![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)](https://go.dev/doc/)
-[![PHP](https://img.shields.io/badge/PHP-777BB4?logo=php&logoColor=white)](https://www.php.net/docs.php)
-[![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)](https://doc.rust-lang.org/book/)
-[![Java](https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=white)](https://docs.oracle.com/en/java/)
-[![LazyGit](https://img.shields.io/badge/LazyGit-0A60C8)](https://github.com/jesseduffield/lazygit)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/)
+[![Tests](https://github.com/freechie/dotfiles/actions/workflows/test.yml/badge.svg)](https://github.com/freechie/dotfiles/actions/workflows/test.yml)
+[![Full bootstrap](https://github.com/freechie/dotfiles/actions/workflows/full-bootstrap.yml/badge.svg)](https://github.com/freechie/dotfiles/actions/workflows/full-bootstrap.yml)
+[![macOS](https://img.shields.io/badge/macOS-supported-000000?logo=apple&logoColor=white)](https://support.apple.com/guide/mac-help/welcome/mac)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-supported-E95420?logo=ubuntu&logoColor=white)](https://documentation.ubuntu.com/)
+[![Windows](https://img.shields.io/badge/Windows-supported-0078D4?logo=windows&logoColor=white)](https://learn.microsoft.com/windows/)
 
 Terminal-focused dotfiles for macOS, Ubuntu/Linux, and Windows PowerShell.
 Includes Zsh, Bash, tmux, Neovim, Spacemacs, Ghostty, Starship, Git config,
@@ -166,6 +139,7 @@ macOS and Ubuntu keep `starship.toml`, with the short hostname from `[custom.hos
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
 - Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`). `emacs/local.el` loads `emacs/darwin.el` on macOS and `emacs/windows.el` on Windows. `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
 - Ghostty: platform configs in `ghostty/`
+- Rectangle Pro: `RectangleProConfig.json`. On macOS, the installer copies it to `~/Library/Application Support/Rectangle Pro/RectangleProConfig.json`. Rectangle Pro imports that copy on its next launch and then renames it.
 - Starship: `starship.toml` on macOS and Ubuntu (`platforms/macos` and `platforms/ubuntu` link to it). Windows uses `platforms/windows/starship.toml`.
 - Git: `.gitconfig`, `.gitignore_global`
 
