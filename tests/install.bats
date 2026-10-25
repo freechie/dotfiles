@@ -534,6 +534,7 @@ MOCK
     "platforms/ubuntu/.bash_profile"
     "platforms/macos/starship.toml"
     "platforms/ubuntu/starship.toml"
+    "platforms/windows/starship.toml"
     "ghostty/config.macos"
     "ghostty/config.linux"
     "tmux/common.conf"

@@ -1,0 +1,61 @@
+add_newline = false
+scan_timeout = 100
+command_timeout = 250
+
+# PowerShell: PS C:\path [branch]>
+format = "[PS](bold blue) $custom$python$git_branch$git_status$status$jobs$cmd_duration$character"
+
+[custom.path]
+shell = ["cmd", "/C"]
+command = "cd"
+when = true
+style = "bold"
+format = "[$output]($style)"
+
+[python]
+format = " [${virtualenv}]($style)"
+style = "blue"
+detect_extensions = []
+detect_files = []
+detect_folders = []
+
+[git_branch]
+format = " \\[[$branch]($style)\\]"
+style = "yellow"
+
+[git_status]
+disabled = false
+format = "[$conflicted$deleted$modified$renamed$staged$untracked$ahead_behind]($style)"
+style = "red"
+staged = " +"
+modified = " !"
+deleted = " x"
+renamed = " »"
+untracked = " ?"
+conflicted = " ="
+ahead = " ⇡"
+behind = " ⇣"
+diverged = " ⇕"
+up_to_date = ""
+
+[status]
+disabled = false
+format = " [exit:$status]($style)"
+style = "red"
+map_symbol = true
+
+[jobs]
+symbol = "+"
+style = "blue"
+number_threshold = 1
+format = " [$symbol$number]($style)"
+
+[cmd_duration]
+min_time = 2000
+show_milliseconds = false
+format = " [$duration]($style)"
+style = "yellow"
+
+[character]
+success_symbol = " [>](bold blue)"
+error_symbol = " [>](bold red)"

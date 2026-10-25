@@ -22,14 +22,6 @@ when = true
 style = "cyan"
 format = "[$output]($style)"
 
-[custom.hostwin]
-os = "windows"
-shell = ["cmd", "/V:ON", "/C"]
-command = "for /f %h in ('hostname') do @set h=%h&& echo !h:~0,3!"
-when = true
-style = "cyan"
-format = "[$output]($style)"
-
 [directory]
 format = "[$path/]($style)"
 style = "141"

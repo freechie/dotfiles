@@ -125,7 +125,7 @@ eza, lazygit, and Node with winget, then links:
 
 - `%LOCALAPPDATA%\nvim` to `nvim/`
 - `~/.spacemacs`, `~/.spacemacs.d/local.el`, `darwin.el`, and `windows.el`
-- `~/.config/starship.toml`
+- `~/.config/starship.toml` to `platforms/windows/starship.toml`
 - the PowerShell profile
 
 `.gitconfig` stays unlinked. Its commit signing key is a macOS path. Zsh,
@@ -156,8 +156,8 @@ is appended to its `early-init.el` by `./install.ps1`, because Emacs reads
 that file before `.spacemacs` and a Spacemacs update can replace it. The
 block is skipped on macOS.
 
-Starship prints the short hostname from `[custom.hostwin]` in `starship.toml`.
-`[custom.host]` is Unix-only.
+Starship on Windows is `platforms/windows/starship.toml`: `PS`, a backslash path, and `>`.
+macOS and Ubuntu keep `starship.toml`, with the short hostname from `[custom.host]`.
 
 ## What Is Managed
 
@@ -166,7 +166,7 @@ Starship prints the short hostname from `[custom.hostwin]` in `starship.toml`.
 - Neovim: `nvim/`, plugin pins in `nvim/lazy-lock.json`
 - Spacemacs: `emacs/.spacemacs` (linked to `~/.spacemacs`). `emacs/local.el` loads `emacs/darwin.el` on macOS and `emacs/windows.el` on Windows. `~/.emacs.d` is a clone of develop. `~/.spacemacs.env` stays machine-local.
 - Ghostty: platform configs in `ghostty/`
-- Starship: `starship.toml` (platform paths under `platforms/` are symlinks to it)
+- Starship: `starship.toml` on macOS and Ubuntu (`platforms/macos` and `platforms/ubuntu` link to it). Windows uses `platforms/windows/starship.toml`.
 - Git: `.gitconfig`, `.gitignore_global`
 
 `~/.emacs.d` is a clone of Spacemacs `develop`, not a symlink into this repo.

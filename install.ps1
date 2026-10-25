@@ -31,6 +31,47 @@ function Add-Failure {
     Write-Host "FAILED: $Message"
 }
 
+function Convert-FsutilPath {
+    param(
+        [string]$Entry,
+        [string]$DriveRoot
+    )
+
+    $entry = $Entry.Trim()
+    if (-not $entry) {
+        return $null
+    }
+
+    if ($entry -match '^[A-Za-z]:\\') {
+        return [IO.Path]::GetFullPath($entry)
+    }
+
+    return [IO.Path]::GetFullPath($DriveRoot.TrimEnd('\') + $entry)
+}
+
+function Test-SameHardLink {
+    param(
+        [string]$Link,
+        [string]$Source
+    )
+
+    $listed = & fsutil hardlink list $Source 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $listed) {
+        return $false
+    }
+
+    $linkFull = [IO.Path]::GetFullPath($Link)
+    $drive = [IO.Path]::GetPathRoot($linkFull)
+    foreach ($entry in @($listed)) {
+        $full = Convert-FsutilPath -Entry $entry -DriveRoot $drive
+        if ($full -and [string]::Equals($full, $linkFull, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function Test-SameTarget {
     param(
         [string]$Link,
@@ -47,8 +88,21 @@ function Test-SameTarget {
         return $false
     }
 
+    if ($item.LinkType -eq "HardLink") {
+        return (Test-SameHardLink -Link $Link -Source $sourceFull)
+    }
+
     foreach ($target in @($item.Target)) {
-        if ([IO.Path]::GetFullPath($target) -eq $sourceFull) {
+        if ([string]::IsNullOrWhiteSpace($target)) {
+            continue
+        }
+
+        $targetPath = $target
+        if (-not [IO.Path]::IsPathRooted($targetPath)) {
+            $targetPath = Join-Path (Split-Path -Parent $Link) $targetPath
+        }
+
+        if ([IO.Path]::GetFullPath($targetPath) -eq $sourceFull) {
             return $true
         }
     }
@@ -226,7 +280,7 @@ Write-Host ".gitconfig is not linked. It enables commit signing with a macOS key
 $profilePath = Join-Path ([Environment]::GetFolderPath("MyDocuments")) "PowerShell\Microsoft.PowerShell_profile.ps1"
 Install-Link -Source (Join-Path $RepoRoot "platforms\windows\Microsoft.PowerShell_profile.ps1") -Link $profilePath -Kind File
 Install-Link -Source (Join-Path $RepoRoot "nvim") -Link (Join-Path $env:LOCALAPPDATA "nvim") -Kind Directory
-Install-Link -Source (Join-Path $RepoRoot "starship.toml") -Link (Join-Path $env:USERPROFILE ".config\starship.toml") -Kind File
+Install-Link -Source (Join-Path $RepoRoot "platforms\windows\starship.toml") -Link (Join-Path $env:USERPROFILE ".config\starship.toml") -Kind File
 Install-Link -Source (Join-Path $RepoRoot "emacs\.spacemacs") -Link (Join-Path $env:USERPROFILE ".spacemacs") -Kind File
 Install-Link -Source (Join-Path $RepoRoot "emacs\local.el") -Link (Join-Path $env:USERPROFILE ".spacemacs.d\local.el") -Kind File
 Install-Link -Source (Join-Path $RepoRoot "emacs\darwin.el") -Link (Join-Path $env:USERPROFILE ".spacemacs.d\darwin.el") -Kind File

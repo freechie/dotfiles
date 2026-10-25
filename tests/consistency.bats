@@ -10,7 +10,8 @@
   grep -q 'LOCALAPPDATA' install.ps1
   grep -q 'Microsoft.PowerShell_profile.ps1' install.ps1
   grep -q 'os = "unix"' starship.toml
-  grep -q 'os = "windows"' starship.toml
+  grep -q 'platforms\\windows\\starship.toml' install.ps1
+  grep -q '\[PS\](bold blue)' platforms/windows/starship.toml
   grep -q 'core.platform.windows' nvim/lua/core/platform/init.lua
 }
 
@@ -54,6 +55,7 @@
     "platforms/ubuntu/.bash_profile"
     "platforms/macos/starship.toml"
     "platforms/ubuntu/starship.toml"
+    "platforms/windows/starship.toml"
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"
