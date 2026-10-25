@@ -43,6 +43,7 @@ This function should only modify configuration layer settings."
      auto-completion
      better-defaults
      emacs-lisp
+     games
      helm
      markdown
      c-c++

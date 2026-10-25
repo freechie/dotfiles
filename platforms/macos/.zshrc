@@ -17,3 +17,5 @@ fi
 # Do not re-run `conda init zsh`; it would restore a 500ms+ Python hook on every prompt.
 
 export PATH="$HOME/.gem/ruby/4.0.0/bin:$PATH"
+
+export PATH="/Users/what/.stripe/bin:$PATH"
