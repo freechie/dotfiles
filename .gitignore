@@ -223,6 +223,7 @@ poetry.toml
 nvim/python-venv/
 nvim/nvim
 pyrightconfig.json
+graphify-out/
 
 ### VisualStudioCode ###
 .vscode/*
