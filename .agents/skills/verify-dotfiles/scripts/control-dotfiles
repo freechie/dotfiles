@@ -1,0 +1,606 @@
+#!/usr/bin/env bash
+# Isolated-HOME driver for the Dotfiles installer CLI and post-install smokes.
+# Never point HOME at the operator's real home.
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+skill_dir="$(cd "$script_dir/.." && pwd -P)"
+repo_root="$(cd "$skill_dir/../../.." && pwd -P)"
+active_file="/tmp/dotfiles-verify-active"
+
+# shellcheck disable=SC1091
+. "$repo_root/shell/shared/platform.sh"
+
+usage() {
+    cat <<'EOF'
+control-dotfiles — isolated-HOME driver for install.sh
+
+  start [--platform macos|linux]   Create a disposable HOME and print RUN_ID
+  doctor                           Read-only: is this run safe to drive?
+  active                           Print the loaded run.env
+  run --name <id> [--curl-trap] -- <cmd...>
+                                   Run a command with HOME=isolated home
+  install --dry-run [--name <id>] [--curl-trap]
+  install --skip-deps --confirm y|n [--name <id>] [--ci-smoke|--no-ci-smoke]
+  install --confirm n [--name <id>]
+  seed <relative-path>             Write a regular file under isolated HOME
+  snapshot --name <id>             Record isolated HOME tree + link status
+  links                            Print OK/MISSING/WRONG for expected links
+  tmux-parse                       Parse installed ~/.tmux.conf on a private socket
+  zsh-check                        Source ~/.zshrc and print gs alias + platform
+  nvim-contract                    Run scripts/verify-nvim.sh against isolated HOME
+  cleanup                          Delete this run's /tmp state; keep evidence
+
+Environment:
+  DOTFILES_VERIFY_RUN    Select a run instead of the last `start`
+  DOTFILES_VERIFY_ALLOW_DEPS=1  Required to run install.sh without --skip-deps/--dry-run
+EOF
+}
+
+die() {
+    printf 'control-dotfiles: %s\n' "$1" >&2
+    exit 1
+}
+
+is_verify_state_path() {
+    case "$1" in
+        /tmp/dotfiles-verify-*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+sanitize_name() {
+    local name="$1"
+    [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || die "unsafe evidence name: $name"
+    printf '%s\n' "$name"
+}
+
+passwd_home() {
+    local user
+    user="$(id -un)"
+    eval "printf '%s\n' ~${user}"
+}
+
+operator_home() {
+    passwd_home
+}
+
+write_run_env() {
+    cat >"$DOTFILES_VERIFY_STATE/run.env" <<EOF
+DOTFILES_VERIFY_RUN='$DOTFILES_VERIFY_RUN'
+DOTFILES_VERIFY_REAL_HOME='$DOTFILES_VERIFY_REAL_HOME'
+DOTFILES_VERIFY_HOME='$DOTFILES_VERIFY_HOME'
+DOTFILES_VERIFY_STATE='$DOTFILES_VERIFY_STATE'
+DOTFILES_VERIFY_EVIDENCE='$DOTFILES_VERIFY_EVIDENCE'
+DOTFILES_VERIFY_PLATFORM='$DOTFILES_VERIFY_PLATFORM'
+DOTFILES_VERIFY_REPO='$DOTFILES_VERIFY_REPO'
+DOTFILES_VERIFY_STARTED_AT='$DOTFILES_VERIFY_STARTED_AT'
+EOF
+}
+
+load_run() {
+    local run_id run_env
+    run_id="${DOTFILES_VERIFY_RUN:-}"
+    if [[ -z "$run_id" && -f "$active_file" ]]; then
+        run_id="$(cat "$active_file")"
+    fi
+    [[ -n "$run_id" ]] || die "no active run; start one first"
+    DOTFILES_VERIFY_STATE="/tmp/dotfiles-verify-$run_id"
+    is_verify_state_path "$DOTFILES_VERIFY_STATE" || die "refusing state path $DOTFILES_VERIFY_STATE"
+    run_env="$DOTFILES_VERIFY_STATE/run.env"
+    [[ -f "$run_env" ]] || die "missing $run_env"
+    # shellcheck disable=SC1090
+    . "$run_env"
+    [[ "$DOTFILES_VERIFY_HOME" == "$DOTFILES_VERIFY_STATE/home" ]] || die "HOME path mismatch in run.env"
+    [[ "$DOTFILES_VERIFY_HOME" != "$DOTFILES_VERIFY_REAL_HOME" ]] || die "isolated HOME equals real HOME"
+}
+
+record_real_baselines() {
+    local real="$DOTFILES_VERIFY_REAL_HOME"
+    mkdir -p "$DOTFILES_VERIFY_STATE/baselines"
+    { ls -d "$real"/dotfiles_backup_* 2>/dev/null || true; } | sort >"$DOTFILES_VERIFY_STATE/baselines/real-backups.txt"
+    local zshrc_link nvim_link
+    if zshrc_link="$(readlink "$real/.zshrc" 2>/dev/null)"; then
+        printf '%s\n' "$zshrc_link" >"$DOTFILES_VERIFY_STATE/baselines/real-zshrc.link"
+        ls -ld "$real/.zshrc" >"$DOTFILES_VERIFY_STATE/baselines/real-zshrc.stat"
+    fi
+    if nvim_link="$(readlink "$real/.config/nvim" 2>/dev/null)"; then
+        printf '%s\n' "$nvim_link" >"$DOTFILES_VERIFY_STATE/baselines/real-nvim.link"
+    fi
+}
+
+home_tree() {
+    if [[ -d "$DOTFILES_VERIFY_HOME" ]]; then
+        find "$DOTFILES_VERIFY_HOME" | sort
+    fi
+}
+
+expected_link_specs() {
+    local platform="$DOTFILES_VERIFY_PLATFORM"
+    local platform_dir source ghostty_target
+    if [[ "$platform" == "linux" ]]; then
+        platform_dir="platforms/ubuntu"
+        source="ghostty/config.linux"
+        ghostty_target="$DOTFILES_VERIFY_HOME/.config/ghostty/config"
+    else
+        platform_dir="platforms/macos"
+        source="ghostty/config.macos"
+        ghostty_target="$DOTFILES_VERIFY_HOME/Library/Application Support/com.mitchellh.ghostty/config"
+    fi
+
+    cat <<EOF
+$platform_dir/.zshrc|$DOTFILES_VERIFY_HOME/.zshrc
+.tmux.conf|$DOTFILES_VERIFY_HOME/.tmux.conf
+tmux/common.conf|$DOTFILES_VERIFY_HOME/.tmux/common.conf
+tmux/macos.conf|$DOTFILES_VERIFY_HOME/.tmux/macos.conf
+tmux/linux.conf|$DOTFILES_VERIFY_HOME/.tmux/linux.conf
+$platform_dir/.bash_profile|$DOTFILES_VERIFY_HOME/.bash_profile
+.fzf.zsh|$DOTFILES_VERIFY_HOME/.fzf.zsh
+.gitconfig|$DOTFILES_VERIFY_HOME/.gitconfig
+.gitignore_global|$DOTFILES_VERIFY_HOME/.gitignore_global
+nvim|$DOTFILES_VERIFY_HOME/.config/nvim
+$platform_dir/starship.toml|$DOTFILES_VERIFY_HOME/.config/starship.toml
+emacs/.spacemacs|$DOTFILES_VERIFY_HOME/.spacemacs
+$source|$ghostty_target
+EOF
+}
+
+print_links() {
+    local spec rel dest expected failures=0
+    while IFS='|' read -r rel dest; do
+        expected="$DOTFILES_VERIFY_REPO/$rel"
+        if [[ ! -L "$dest" ]]; then
+            printf 'MISSING %s\n' "$rel"
+            failures=1
+            continue
+        fi
+        if [[ "$dest" -ef "$expected" ]]; then
+            printf 'OK %s -> %s\n' "$rel" "$expected"
+        else
+            printf 'WRONG %s -> %s (expected %s)\n' "$rel" "$(readlink "$dest")" "$expected"
+            failures=1
+        fi
+    done < <(expected_link_specs)
+    return "$failures"
+}
+
+install_curl_trap() {
+    mkdir -p "$DOTFILES_VERIFY_STATE/bin"
+    cat >"$DOTFILES_VERIFY_STATE/bin/curl" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "curl $*" >>"${DOTFILES_VERIFY_CURL_LOG:?}"
+echo "curl trap: network forbidden during this drive" >&2
+exit 42
+EOF
+    chmod 0755 "$DOTFILES_VERIFY_STATE/bin/curl"
+}
+
+evidence_dir_for() {
+    local name="$1"
+    local dir="$DOTFILES_VERIFY_EVIDENCE/$name"
+    mkdir -p "$dir"
+    printf '%s\n' "$dir"
+}
+
+run_in_home() {
+    local name="" curl_trap=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name)
+                name="$(sanitize_name "$2")"
+                shift 2
+                ;;
+            --curl-trap)
+                curl_trap=1
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                die "run: unknown option $1"
+                ;;
+        esac
+    done
+    [[ -n "$name" ]] || die "run requires --name"
+    [[ $# -gt 0 ]] || die "run requires a command after --"
+
+    load_run
+    local ev path_prefix=""
+    ev="$(evidence_dir_for "$name")"
+    : >"$ev/curl.log"
+    export DOTFILES_VERIFY_CURL_LOG="$ev/curl.log"
+    home_tree >"$ev/home-before.txt"
+
+    if [[ "$curl_trap" -eq 1 ]]; then
+        install_curl_trap
+        path_prefix="$DOTFILES_VERIFY_STATE/bin:"
+    fi
+
+    local ec=0
+    set +e
+    env HOME="$DOTFILES_VERIFY_HOME" \
+        DOTFILES_PLATFORM="$DOTFILES_VERIFY_PLATFORM" \
+        DOTFILES_CI_SMOKE_INSTALL="${DOTFILES_CI_SMOKE_INSTALL:-}" \
+        DOTFILES_FORCE_NVIM_BOOTSTRAP="${DOTFILES_FORCE_NVIM_BOOTSTRAP:-}" \
+        DOTFILES_VERIFY_CURL_LOG="$DOTFILES_VERIFY_CURL_LOG" \
+        HOMEBREW_CACHE="$DOTFILES_VERIFY_STATE/homebrew/cache" \
+        HOMEBREW_LOGS="$DOTFILES_VERIFY_STATE/homebrew/logs" \
+        HOMEBREW_TEMP="$DOTFILES_VERIFY_STATE/homebrew/tmp" \
+        PATH="${path_prefix}${PATH}" \
+        "$@" >"$ev/transcript.txt" 2>&1
+    ec=$?
+    set -e
+
+    printf '%s\n' "$ec" >"$ev/exit.txt"
+    printf '%s\n' "$*" >"$ev/command.txt"
+    home_tree >"$ev/home-after.txt"
+    diff -u "$ev/home-before.txt" "$ev/home-after.txt" >"$ev/home-diff.txt" || true
+    { print_links || true; } >"$ev/links.txt"
+    printf 'RESULT name=%s exit=%s evidence=%s\n' "$name" "$ec" "$ev"
+    return "$ec"
+}
+
+cmd_start() {
+    local platform=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --platform)
+                platform="$2"
+                shift 2
+                ;;
+            *) die "start: unknown option $1" ;;
+        esac
+    done
+
+    local invoking_home
+    invoking_home="$(operator_home)"
+    case "$invoking_home" in
+        /tmp/dotfiles-verify-*)
+            die "refusing REAL_HOME under /tmp/dotfiles-verify-: $invoking_home"
+            ;;
+    esac
+    [[ -d "$invoking_home" ]] || die "operator home does not exist: $invoking_home"
+
+    if [[ -z "$platform" ]]; then
+        platform="$(dotfiles_platform)"
+    fi
+    case "$platform" in
+        macos|linux) ;;
+        *) die "unsupported --platform $platform" ;;
+    esac
+
+    local run_id
+    run_id="$(date +%Y%m%dT%H%M%S)-$$"
+    DOTFILES_VERIFY_RUN="$run_id"
+    DOTFILES_VERIFY_REAL_HOME="$invoking_home"
+    DOTFILES_VERIFY_STATE="/tmp/dotfiles-verify-$run_id"
+    DOTFILES_VERIFY_HOME="$DOTFILES_VERIFY_STATE/home"
+    DOTFILES_VERIFY_EVIDENCE="$skill_dir/evidence/$run_id"
+    DOTFILES_VERIFY_PLATFORM="$platform"
+    DOTFILES_VERIFY_REPO="$repo_root"
+    DOTFILES_VERIFY_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+    is_verify_state_path "$DOTFILES_VERIFY_STATE" || die "refusing state path"
+    [[ "$DOTFILES_VERIFY_HOME" != "$DOTFILES_VERIFY_REAL_HOME" ]] || die "isolated HOME equals real HOME"
+
+    mkdir -p "$DOTFILES_VERIFY_HOME/.config" "$DOTFILES_VERIFY_STATE/tmux" \
+        "$DOTFILES_VERIFY_STATE/homebrew/cache" "$DOTFILES_VERIFY_STATE/homebrew/logs" \
+        "$DOTFILES_VERIFY_STATE/homebrew/tmp" "$DOTFILES_VERIFY_EVIDENCE"
+    write_run_env
+    record_real_baselines
+    printf '%s\n' "$run_id" >"$active_file"
+
+    printf 'RUN_ID=%s\n' "$run_id"
+    printf 'HOME=%s\n' "$DOTFILES_VERIFY_HOME"
+    printf 'REAL_HOME=%s\n' "$DOTFILES_VERIFY_REAL_HOME"
+    printf 'PLATFORM=%s\n' "$DOTFILES_VERIFY_PLATFORM"
+    printf 'EVIDENCE=%s\n' "$DOTFILES_VERIFY_EVIDENCE"
+    printf 'REPO=%s\n' "$DOTFILES_VERIFY_REPO"
+}
+
+cmd_doctor() {
+    load_run
+    local failures=0
+
+    pass() { printf 'PASS %s\n' "$1"; }
+    fail() {
+        printf 'FAIL %s\n' "$1"
+        failures=1
+    }
+
+    printf 'Dotfiles verify doctor run=%s platform=%s\n' "$DOTFILES_VERIFY_RUN" "$DOTFILES_VERIFY_PLATFORM"
+
+    if [[ -x "$DOTFILES_VERIFY_REPO/install.sh" ]]; then
+        pass "install.sh is executable"
+    else
+        fail "install.sh missing or not executable"
+    fi
+
+    if [[ -d "$DOTFILES_VERIFY_HOME" ]]; then
+        pass "isolated HOME exists"
+    else
+        fail "isolated HOME missing"
+    fi
+
+    if [[ "$DOTFILES_VERIFY_HOME" != "$DOTFILES_VERIFY_REAL_HOME" ]]; then
+        pass "isolated HOME is not REAL_HOME"
+    else
+        fail "isolated HOME equals REAL_HOME"
+    fi
+
+    local expected_real
+    expected_real="$(passwd_home)"
+    if [[ "$DOTFILES_VERIFY_REAL_HOME" == "$expected_real" ]]; then
+        pass "REAL_HOME matches passwd home"
+    else
+        fail "REAL_HOME $DOTFILES_VERIFY_REAL_HOME does not match passwd home $expected_real"
+    fi
+
+    if is_verify_state_path "$DOTFILES_VERIFY_STATE"; then
+        pass "state path is under /tmp/dotfiles-verify-"
+    else
+        fail "state path is not a verify path"
+    fi
+
+    local current_backups current_zshrc
+    current_backups="$(mktemp)"
+    { ls -d "$DOTFILES_VERIFY_REAL_HOME"/dotfiles_backup_* 2>/dev/null || true; } | sort >"$current_backups"
+    if diff -q "$DOTFILES_VERIFY_STATE/baselines/real-backups.txt" "$current_backups" >/dev/null; then
+        pass "no new dotfiles_backup_* under REAL_HOME"
+    else
+        fail "REAL_HOME gained a backup directory; installer likely leaked"
+        diff "$DOTFILES_VERIFY_STATE/baselines/real-backups.txt" "$current_backups" || true
+    fi
+    rm -f "$current_backups"
+
+    if [[ -f "$DOTFILES_VERIFY_STATE/baselines/real-zshrc.link" ]]; then
+        current_zshrc="$(readlink "$DOTFILES_VERIFY_REAL_HOME/.zshrc" 2>/dev/null || true)"
+        if [[ "$current_zshrc" == "$(cat "$DOTFILES_VERIFY_STATE/baselines/real-zshrc.link")" ]]; then
+            pass "REAL_HOME .zshrc symlink unchanged"
+        else
+            fail "REAL_HOME .zshrc symlink changed"
+        fi
+    fi
+
+    if [[ -d "$DOTFILES_VERIFY_EVIDENCE" ]]; then
+        pass "evidence directory exists"
+    else
+        fail "evidence directory missing"
+    fi
+
+    printf 'Doctor summary: isolated HOME=%s REAL_HOME=%s\n' "$DOTFILES_VERIFY_HOME" "$DOTFILES_VERIFY_REAL_HOME"
+    if [[ "$failures" -ne 0 ]]; then
+        printf 'UNSAFE\n'
+        return 1
+    fi
+    printf 'SAFE\n'
+}
+
+cmd_active() {
+    load_run
+    cat "$DOTFILES_VERIFY_STATE/run.env"
+}
+
+cmd_seed() {
+    load_run
+    local rel="${1:-}"
+    [[ -n "$rel" ]] || die "seed requires a path relative to isolated HOME"
+    case "$rel" in
+        /* | .. | ../* | */../*) die "seed path must be relative and stay under HOME" ;;
+    esac
+    local dest="$DOTFILES_VERIFY_HOME/$rel"
+    mkdir -p "$(dirname "$dest")"
+    cat >"$dest"
+    printf 'SEEDED %s\n' "$dest"
+}
+
+cmd_snapshot() {
+    local name=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name)
+                name="$(sanitize_name "$2")"
+                shift 2
+                ;;
+            *) die "snapshot: unknown option $1" ;;
+        esac
+    done
+    [[ -n "$name" ]] || die "snapshot requires --name"
+    load_run
+    local ev
+    ev="$(evidence_dir_for "$name")"
+    home_tree >"$ev/home-tree.txt"
+    { print_links || true; } >"$ev/links.txt"
+    { ls -ld "$DOTFILES_VERIFY_HOME"/dotfiles_backup_* 2>/dev/null || true; } >"$ev/backups.txt"
+    printf 'RESULT name=%s evidence=%s\n' "$name" "$ev"
+}
+
+cmd_links() {
+    load_run
+    print_links
+}
+
+cmd_tmux_parse() {
+    load_run
+    [[ -L "$DOTFILES_VERIFY_HOME/.tmux.conf" ]] || die "no ~/.tmux.conf link; run skip-deps install first"
+    local socket="dotfiles-verify-$DOTFILES_VERIFY_RUN"
+    local ev
+    ev="$(evidence_dir_for "tmux-parse")"
+    local ec=0
+    set +e
+    env HOME="$DOTFILES_VERIFY_HOME" TMUX_TMPDIR="$DOTFILES_VERIFY_STATE/tmux" \
+        tmux -L "$socket" -f "$DOTFILES_VERIFY_HOME/.tmux.conf" \
+        start-server \; show -g prefix \; kill-server >"$ev/transcript.txt" 2>&1
+    ec=$?
+    set -e
+    printf '%s\n' "$ec" >"$ev/exit.txt"
+    printf 'RESULT name=tmux-parse exit=%s evidence=%s\n' "$ec" "$ev"
+    return "$ec"
+}
+
+cmd_zsh_check() {
+    load_run
+    [[ -L "$DOTFILES_VERIFY_HOME/.zshrc" ]] || die "no ~/.zshrc link; run skip-deps install first"
+    local ev
+    ev="$(evidence_dir_for "zsh-check")"
+    local ec=0
+    set +e
+    env HOME="$DOTFILES_VERIFY_HOME" DOTFILES_PLATFORM="$DOTFILES_VERIFY_PLATFORM" \
+        zsh -c 'source "$HOME/.zshrc" 2>"$HOME/zsh.err"; alias gs; printf "platform:%s\n" "$DOTFILES_PLATFORM"' \
+        >"$ev/transcript.txt" 2>&1
+    ec=$?
+    set -e
+    if [[ -f "$DOTFILES_VERIFY_HOME/zsh.err" ]]; then
+        cp "$DOTFILES_VERIFY_HOME/zsh.err" "$ev/zsh.err"
+    fi
+    printf '%s\n' "$ec" >"$ev/exit.txt"
+    printf 'RESULT name=zsh-check exit=%s evidence=%s\n' "$ec" "$ev"
+    return "$ec"
+}
+
+cmd_nvim_contract() {
+    load_run
+    local ev
+    ev="$(evidence_dir_for "nvim-contract")"
+    local ec=0
+    set +e
+    env HOME="$DOTFILES_VERIFY_HOME" \
+        XDG_CONFIG_HOME="$DOTFILES_VERIFY_HOME/.config" \
+        XDG_DATA_HOME="$DOTFILES_VERIFY_STATE/xdg/data" \
+        DOTFILES_CI_SMOKE_NVIM=1 \
+        bash "$DOTFILES_VERIFY_REPO/scripts/verify-nvim.sh" >"$ev/transcript.txt" 2>&1
+    ec=$?
+    set -e
+    printf '%s\n' "$ec" >"$ev/exit.txt"
+    printf 'RESULT name=nvim-contract exit=%s evidence=%s\n' "$ec" "$ev"
+    return "$ec"
+}
+
+cmd_install() {
+    local dry_run=0 skip_deps=0 confirm="" ci_smoke=1 curl_trap=0 name="" allow_deps=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run)
+                dry_run=1
+                shift
+                ;;
+            --skip-deps)
+                skip_deps=1
+                shift
+                ;;
+            --confirm)
+                confirm="$2"
+                shift 2
+                ;;
+            --ci-smoke)
+                ci_smoke=1
+                shift
+                ;;
+            --no-ci-smoke)
+                ci_smoke=0
+                shift
+                ;;
+            --curl-trap)
+                curl_trap=1
+                shift
+                ;;
+            --name)
+                name="$(sanitize_name "$2")"
+                shift 2
+                ;;
+            --allow-deps)
+                allow_deps=1
+                shift
+                ;;
+            *) die "install: unknown option $1" ;;
+        esac
+    done
+
+    load_run
+    cd "$DOTFILES_VERIFY_REPO"
+
+    local args=()
+    if [[ "$dry_run" -eq 1 ]]; then
+        args+=(--dry-run)
+        [[ -n "$name" ]] || name="dry-run-install"
+        [[ "$curl_trap" -eq 1 ]] || curl_trap=1
+        unset DOTFILES_CI_SMOKE_INSTALL
+    elif [[ "$confirm" == "n" ]]; then
+        [[ -n "$name" ]] || name="abort-install"
+        unset DOTFILES_CI_SMOKE_INSTALL
+    elif [[ "$skip_deps" -eq 1 ]]; then
+        args+=(--skip-deps)
+        [[ -n "$confirm" ]] || die "mutating install requires --confirm y or --confirm n"
+        [[ -n "$name" ]] || name="skip-deps-install"
+        if [[ "$ci_smoke" -eq 1 ]]; then
+            export DOTFILES_CI_SMOKE_INSTALL=1
+        else
+            unset DOTFILES_CI_SMOKE_INSTALL
+        fi
+    elif [[ "$allow_deps" -eq 1 && "${DOTFILES_VERIFY_ALLOW_DEPS:-}" == "1" ]]; then
+        [[ -n "$confirm" ]] || die "mutating install requires --confirm y or --confirm n"
+        [[ -n "$name" ]] || name="full-install"
+    else
+        die "refusing full dependency install; use --dry-run, --confirm n, or --skip-deps (CI owns brew/apt)"
+    fi
+
+    local run_flags=(--name "$name")
+    if [[ "$curl_trap" -eq 1 ]]; then
+        run_flags+=(--curl-trap)
+    fi
+
+    if [[ "$dry_run" -eq 1 ]]; then
+        run_in_home "${run_flags[@]}" -- ./install.sh "${args[@]}"
+        return
+    fi
+
+    run_in_home "${run_flags[@]}" -- bash -c 'printf "%s\n" "$1" | ./install.sh "${@:2}"' bash "$confirm" "${args[@]}"
+}
+
+cmd_cleanup() {
+    load_run
+    local socket="dotfiles-verify-$DOTFILES_VERIFY_RUN"
+    if command -v tmux >/dev/null 2>&1; then
+        env TMUX_TMPDIR="$DOTFILES_VERIFY_STATE/tmux" tmux -L "$socket" kill-server >/dev/null 2>&1 || true
+    fi
+    is_verify_state_path "$DOTFILES_VERIFY_STATE" || die "refusing to delete $DOTFILES_VERIFY_STATE"
+    rm -rf "$DOTFILES_VERIFY_STATE"
+    if [[ -f "$active_file" ]] && [[ "$(cat "$active_file")" == "$DOTFILES_VERIFY_RUN" ]]; then
+        rm -f "$active_file"
+    fi
+    printf 'CLEANED state=/tmp/dotfiles-verify-%s\n' "$DOTFILES_VERIFY_RUN"
+    printf 'KEPT evidence=%s\n' "$DOTFILES_VERIFY_EVIDENCE"
+}
+
+main() {
+    local cmd="${1:-}"
+    shift || true
+    case "$cmd" in
+        start) cmd_start "$@" ;;
+        doctor) cmd_doctor "$@" ;;
+        active) cmd_active "$@" ;;
+        run)
+            load_run
+            cd "$DOTFILES_VERIFY_REPO"
+            run_in_home "$@"
+            ;;
+        install) cmd_install "$@" ;;
+        seed) cmd_seed "$@" ;;
+        snapshot) cmd_snapshot "$@" ;;
+        links) cmd_links "$@" ;;
+        tmux-parse) cmd_tmux_parse "$@" ;;
+        zsh-check) cmd_zsh_check "$@" ;;
+        nvim-contract) cmd_nvim_contract "$@" ;;
+        cleanup) cmd_cleanup "$@" ;;
+        -h | --help | help | "") usage ;;
+        *)
+            usage >&2
+            die "unknown command $cmd"
+            ;;
+    esac
+}
+
+main "$@"
