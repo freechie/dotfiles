@@ -1072,6 +1072,34 @@ install_macos_emacs_app() {
     fi
 }
 
+install_ghostty_terminfo() {
+    local src name dest
+
+    if ! dotfiles_is_macos; then
+        return
+    fi
+
+    src="/Applications/Ghostty.app/Contents/Resources/terminfo"
+    if [[ ! -d "$src" ]]; then
+        echo "Skipping Ghostty terminfo: Ghostty.app is not installed."
+        return
+    fi
+
+    if [[ -n "$DRY_RUN" ]]; then
+        echo "DRY RUN: cp Ghostty terminfo into $HOME/.terminfo"
+        return
+    fi
+
+    # Emacs looks up TERM itself. Ghostty only ships xterm-ghostty inside
+    # the app bundle, so a daemon started outside Ghostty cannot see it.
+    for name in 78/xterm-ghostty 67/ghostty; do
+        dest="$HOME/.terminfo/$name"
+        mkdir -p "$(dirname "$dest")"
+        cp -f "$src/$name" "$dest"
+    done
+    echo "Installed Ghostty terminfo for Emacs."
+}
+
 add_link_spec() {
     link_specs+=("$1|$2|$3")
 }
@@ -1320,6 +1348,7 @@ main() {
     run_deferred_error_step "Spacemacs install" install_spacemacs
     run_deferred_error_step "emacs-plus PATH link" prefer_emacs_plus_on_path
     run_deferred_error_step "Emacs.app copy" install_macos_emacs_app
+    run_deferred_error_step "Ghostty terminfo" install_ghostty_terminfo
     run_deferred_error_step "Python Neovim provider install" install_pynvim_provider
     bootstrap_neovim_environment
 

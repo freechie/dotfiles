@@ -603,6 +603,8 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
   (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
     (when (file-readable-p local)
       (load local nil t)))
+  ;; Rex's TERM is xterm-rex. Emacs has no term file by that name.
+  (add-to-list 'term-file-aliases '("xterm-rex" . "xterm-256color"))
   (add-hook 'after-init-hook #'dotfiles/load-git-commit-editor))
 
 (defun dotspacemacs/user-config ()
@@ -611,6 +613,54 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+  ;; The home buffer runs a button on mouse-down and ignores mouse-up so a
+  ;; press and a release do not both fire. Rex delivers the release only.
+  (defun dotfiles/spacemacs-buffer-mouse-1 (event)
+    "Open the home-buffer button under a mouse-up EVENT."
+    (interactive "e")
+    (unless (eq last-command 'spacemacs-buffer//mouse-1)
+      (spacemacs-buffer//mouse-1 event)))
+  (with-eval-after-load 'core-spacemacs-buffer
+    (define-key spacemacs-buffer-mode-map [mouse-1]
+                #'dotfiles/spacemacs-buffer-mouse-1)
+    (with-eval-after-load 'evil
+      (evil-make-overriding-map spacemacs-buffer-mode-map 'motion)))
+  ;; A daemon draws the home buffer on its 80-column frame. emacsclient
+  ;; then shows that buffer in a wider pane without a later size change,
+  ;; so check again after the frame exists.
+  (defvar dotfiles/spacemacs-home-refresh-scheduled nil)
+  (defun dotfiles/spacemacs-home-window (&optional frame)
+    (let ((buf (and (boundp 'spacemacs-buffer-name)
+                    (get-buffer spacemacs-buffer-name))))
+      (when buf
+        (if (framep frame)
+            (get-buffer-window buf frame)
+          (get-buffer-window buf t)))))
+  (defun dotfiles/refresh-spacemacs-home-now ()
+    (setq dotfiles/spacemacs-home-refresh-scheduled nil)
+    (let ((win (dotfiles/spacemacs-home-window)))
+      (when (and win
+                 (boundp 'spacemacs-buffer--window-width)
+                 (fboundp 'spacemacs-buffer/goto-buffer)
+                 (not (eq (window-width win) spacemacs-buffer--window-width)))
+        (with-selected-window win
+          (setq spacemacs-buffer--last-width nil)
+          (spacemacs-buffer/goto-buffer t)))))
+  (defun dotfiles/refresh-spacemacs-home-width (&optional frame)
+    "Redraw the home buffer when FRAME is wider than the drawn banner."
+    (let ((win (dotfiles/spacemacs-home-window frame)))
+      (when (and win
+                 (not dotfiles/spacemacs-home-refresh-scheduled)
+                 (boundp 'spacemacs-buffer--window-width)
+                 (not (eq (window-width win) spacemacs-buffer--window-width)))
+        (setq dotfiles/spacemacs-home-refresh-scheduled t)
+        (run-with-timer 0 nil #'dotfiles/refresh-spacemacs-home-now))))
+  (defun dotfiles/schedule-spacemacs-home-center (&rest _)
+    (dolist (delay '(0 0.2 1.0))
+      (run-with-timer delay nil #'dotfiles/refresh-spacemacs-home-width)))
+  (add-hook 'server-after-make-frame-hook #'dotfiles/schedule-spacemacs-home-center)
+  (add-hook 'window-size-change-functions #'dotfiles/refresh-spacemacs-home-width)
+  (add-hook 'emacs-startup-hook #'dotfiles/schedule-spacemacs-home-center)
   ;; eza --icons prints Nerd Font private-use glyphs. Source Code Pro has
   ;; none of them, so Emacs draws hex boxes. Keep the text font and only
   ;; fall back for those icon ranges.
