@@ -4,7 +4,7 @@
 	signingkey = /Users/what/.ssh/id_ed25519_github_signing.pub
 
 [core]
-	editor = emacsclient -nw -a ""
+	editor = emacsclient -nw -a ''
 	excludesFile = ~/.gitignore_global
 
 [init]
