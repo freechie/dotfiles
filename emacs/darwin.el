@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t; -*-
 ;; macOS Spacemacs settings. Windows loads emacs/windows.el instead.
-;; auto-dark picks its own detector here (NS / AppleScript). Do not set
+;; auto-dark uses NS AppleScript on a GUI frame. A Rex tty frame has no
+;; window-system, so allow the osascript fallback. Do not set
 ;; auto-dark-detection-method to winreg.
 
 (setq org-agenda-files
@@ -20,7 +21,8 @@
   "Follow the macOS appearance. Must run after Spacemacs loads its theme."
   (require 'auto-dark nil t)
   (when (featurep 'auto-dark)
-    (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light)))
+    (setq auto-dark-themes '((spacemacs-dark) (spacemacs-light))
+          auto-dark-allow-osascript t)
     (auto-dark-mode 1)))
 
 ;; user-init runs before `spacemacs/setup-startup-hook', which prepends its
