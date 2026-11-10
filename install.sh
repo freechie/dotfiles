@@ -1134,6 +1134,8 @@ build_link_specs() {
     if ghostty_target="$(dotfiles_ghostty_config_target 2>/dev/null)"; then
         add_link_spec "$ghostty_source" "$ghostty_target" "Ghostty config"
     fi
+
+    add_link_spec "rex/init.lua" "$HOME/.config/rex/init.lua" "Rex config"
 }
 
 validate_link_sources() {

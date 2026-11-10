@@ -537,6 +537,7 @@ MOCK
     "platforms/windows/starship.toml"
     "ghostty/config.macos"
     "ghostty/config.linux"
+    "rex/init.lua"
     "tmux/common.conf"
     "tmux/macos.conf"
     "tmux/linux.conf"

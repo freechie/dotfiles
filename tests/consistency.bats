@@ -49,6 +49,7 @@
     "starship.toml"
     "ghostty/config.macos"
     "ghostty/config.linux"
+    "rex/init.lua"
     "platforms/macos/.zshrc"
     "platforms/ubuntu/.zshrc"
     "platforms/macos/.bash_profile"
