@@ -63,6 +63,7 @@ This function should only modify configuration layer settings."
      ;; Uncomment and restart when you want the mega-pack again.
      ;; themes-megapack
      version-control
+     git
      treemacs)
 
 
@@ -575,6 +576,21 @@ See the header of this file for more information."
   (spacemacs/load-spacemacs-env)
   )
 
+(defun dotfiles/git-commit-body-fill-column ()
+  "Wrap the commit body at the conventional column.
+`git-commit' does not fill the summary line."
+  (setq-local fill-column 72))
+
+(defun dotfiles/load-git-commit-editor ()
+  "Load Magit's commit editor before a daemon accepts clients.
+`emacs --daemon' calls `server-start' after `after-init-hook' and before
+`emacs-startup-hook'. Setup in `dotspacemacs/user-config' runs too late:
+emacsclient has already opened COMMIT_EDITMSG in `fundamental-mode'."
+  (when (require 'git-commit nil t)
+    (add-hook 'git-commit-setup-hook #'dotfiles/git-commit-body-fill-column)
+    (add-hook 'git-commit-setup-hook #'git-commit-setup-flyspell)
+    (global-git-commit-mode 1)))
+
 (defun dotspacemacs/user-init ()
   "Initialization for user code:
 This function is called immediately after `dotspacemacs/init', before layer
@@ -586,7 +602,8 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
   ;; Spacemacs applies the default font and installs packages.
   (let ((local (expand-file-name "~/.spacemacs.d/local.el")))
     (when (file-readable-p local)
-      (load local nil t))))
+      (load local nil t)))
+  (add-hook 'after-init-hook #'dotfiles/load-git-commit-editor))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
