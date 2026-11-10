@@ -90,7 +90,7 @@ brew bundle --file=Brewfile.personal-macos
 
 PowerShell 7 is the shell. `platforms/windows/Microsoft.PowerShell_profile.ps1`
 is linked to the PowerShell 7 profile. It sets `HOME` when that variable is
-empty, prepends Neovim and Emacs to `PATH`, and sets `EDITOR` to `nvim`.
+empty, prepends Neovim and Emacs to `PATH`, and sets `EDITOR` to `emacsclient`.
 Starship and zoxide initialize when those commands exist.
 
 `./install.ps1` installs Neovim, Emacs, Starship, ripgrep, fd, fzf, zoxide,

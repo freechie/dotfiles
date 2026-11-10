@@ -6,10 +6,31 @@ esac
 alias icloud='cd ~/Library/Mobile\ Documents/com~apple~CloudDocs'
 
 update() {
-    sudo softwareupdate -i -a
+    local password sudo_keepalive
+    # sudo and Apple Silicon's volume-owner check are separate prompts.
+    # Read the password once and give that same secret to both.
+    read -rs -p "Password: " password || return 1
+    echo
+    printf '%s\n%s\n' "$password" "$password" \
+        | sudo -S -p '' softwareupdate -i -a --agree-to-license --user "$USER" --stdinpass
+    unset password
+
+    if sudo -n true 2>/dev/null; then
+        while true; do
+            sudo -n true 2>/dev/null || exit
+            sleep 60
+            kill -0 $$ || exit
+        done &
+        sudo_keepalive=$!
+    fi
 
     if command -v brew >/dev/null 2>&1; then
         brew update && HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade && brew cleanup
+    fi
+
+    if [[ -n "${sudo_keepalive:-}" ]]; then
+        kill "$sudo_keepalive" 2>/dev/null
+        wait "$sudo_keepalive" 2>/dev/null
     fi
 
     echo "Updates complete."

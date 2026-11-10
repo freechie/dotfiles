@@ -26,8 +26,8 @@ case ":$PATH:" in
     *) export PATH="$HOME/.antigravity/antigravity/bin:$PATH" ;;
 esac
 
-export EDITOR="nvim"
-export VISUAL="nvim"
+export EDITOR="emacsclient -nw -a ''"
+export VISUAL="emacsclient -nw -a ''"
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 

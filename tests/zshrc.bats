@@ -33,11 +33,11 @@ source_zshrc_cmd() {
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; echo \$EDITOR"
   [ "$status" -eq 0 ]
   [ -n "$output" ]
-  [ "$output" = "nvim" ]
+  [ "$output" = "emacsclient -nw -a ''" ]
 
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; echo \$VISUAL"
   [ -n "$output" ]
-  [ "$output" = "nvim" ]
+  [ "$output" = "emacsclient -nw -a ''" ]
 
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; echo \$LANG"
   [ -n "$output" ]
@@ -228,7 +228,16 @@ EOF
 @test "macOS update disables Homebrew auto-update during upgrade" {
   run env DOTFILES_PLATFORM=macos zsh -c '
     source .zshrc 2>/tmp/zshrc_err
-    sudo() { "$@"; }
+    sudo() {
+      while [[ "$1" == -* ]]; do
+        if [[ "$1" == -p ]]; then
+          shift 2
+        else
+          shift
+        fi
+      done
+      "$@"
+    }
     softwareupdate() { echo "softwareupdate:$*"; }
     brew() {
       if [ "$1" = "upgrade" ]; then
@@ -238,7 +247,7 @@ EOF
       fi
     }
     update
-  '
+  ' <<<'secret'
   [ "$status" -eq 0 ]
   [[ "$output" == *"softwareupdate:-i -a"* ]]
   [[ "$output" == *"brew:update"* ]]

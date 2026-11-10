@@ -7,7 +7,7 @@ setup() {
 @test "bash_profile loads shared environment" {
   run bash -lc 'source ./.bash_profile; printf "%s\n%s\n%s\n" "$EDITOR" "$VISUAL" "$LANG"'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nvim"* ]]
+  [[ "$output" == *"emacsclient -nw -a ''"* ]]
   [[ "$output" == *"en_US.UTF-8"* ]]
 }
 
