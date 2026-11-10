@@ -73,6 +73,9 @@ source_zshrc_cmd() {
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; alias gs"
   [ "$output" = "gs='git status -sb'" ]
 
+  run zsh -c "source .zshrc 2>/tmp/zshrc_err; alias e"
+  [ "$output" = "e='emacsclient -nw -a \"\"'" ]
+
   # Safety aliases
   run zsh -c "source .zshrc 2>/tmp/zshrc_err; alias rm"
   [ "$output" = "rm='rm -i'" ]

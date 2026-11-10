@@ -1,5 +1,6 @@
 alias reload='source ~/.zshrc && echo "Config reloaded!"'
 alias zshconfig='${EDITOR:-nvim} ~/.zshrc'
+alias e='emacsclient -nw -a ""'
 alias cls='clear'
 
 alias rm='rm -i'

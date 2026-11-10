@@ -28,6 +28,7 @@ esac
 
 export EDITOR="emacsclient -nw -a ''"
 export VISUAL="emacsclient -nw -a ''"
+alias e='emacsclient -nw -a ""'
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
