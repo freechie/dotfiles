@@ -4,7 +4,7 @@
 	signingkey = /Users/what/.ssh/id_ed25519_github_signing.pub
 
 [core]
-	editor = nvim
+	editor = emacsclient -nw -a ""
 	excludesFile = ~/.gitignore_global
 
 [init]
@@ -44,3 +44,9 @@
 	gpgsign = true
 [tag]
 	gpgSign = true
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
