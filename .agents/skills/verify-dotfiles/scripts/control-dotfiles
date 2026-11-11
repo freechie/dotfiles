@@ -138,7 +138,6 @@ tmux/linux.conf|$DOTFILES_VERIFY_HOME/.tmux/linux.conf
 $platform_dir/.bash_profile|$DOTFILES_VERIFY_HOME/.bash_profile
 .fzf.zsh|$DOTFILES_VERIFY_HOME/.fzf.zsh
 .gitconfig|$DOTFILES_VERIFY_HOME/.gitconfig
-.gitignore_global|$DOTFILES_VERIFY_HOME/.gitignore_global
 nvim|$DOTFILES_VERIFY_HOME/.config/nvim
 $platform_dir/starship.toml|$DOTFILES_VERIFY_HOME/.config/starship.toml
 emacs/.spacemacs|$DOTFILES_VERIFY_HOME/.spacemacs

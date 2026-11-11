@@ -141,7 +141,7 @@ macOS and Ubuntu keep `starship.toml`, with the short hostname from `[custom.hos
 - Ghostty: platform configs in `ghostty/`
 - Rectangle Pro: `RectangleProConfig.json`. On macOS, the installer copies it to `~/Library/Application Support/Rectangle Pro/RectangleProConfig.json`. Rectangle Pro imports that copy on its next launch and then renames it.
 - Starship: `starship.toml` on macOS and Ubuntu (`platforms/macos` and `platforms/ubuntu` link to it). Windows uses `platforms/windows/starship.toml`.
-- Git: `.gitconfig`, `.gitignore_global`
+- Git: `.gitconfig`, repo `.gitignore`
 
 `~/.emacs.d` is a clone of Spacemacs `develop`, not a symlink into this repo.
 On macOS, Spotlight ignores `Emacs.app` symlinks (`brew linkapps` is gone).

@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 
 @test "repo does not contain machine-local Finder metadata" {
-  run bash -c 'find . \( -path ./.git -o -path ./.cursor \) -prune -o -name ".DS_Store" -print'
-  [ "$status" -eq 0 ]
+  run bash -c 'git ls-files -z | tr "\0" "\n" | grep -E "(^|/)\.DS_Store$"'
+  [ "$status" -eq 1 ]
   [ -z "$output" ]
 }
 
@@ -12,7 +12,7 @@
 }
 
 @test "repo does not hardcode this machine's dotfiles checkout path" {
-  run bash -c 'grep -R --exclude-dir=.git --exclude-dir=.cursor "[/]Users/what/Sites/dotfiles" -- .'
+  run git grep -E '[/]Users/what/Sites/dotfiles'
   [ "$status" -eq 1 ]
   [ -z "$output" ]
 }

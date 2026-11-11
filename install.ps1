@@ -285,7 +285,15 @@ Install-Link -Source (Join-Path $RepoRoot "emacs\.spacemacs") -Link (Join-Path $
 Install-Link -Source (Join-Path $RepoRoot "emacs\local.el") -Link (Join-Path $env:USERPROFILE ".spacemacs.d\local.el") -Kind File
 Install-Link -Source (Join-Path $RepoRoot "emacs\darwin.el") -Link (Join-Path $env:USERPROFILE ".spacemacs.d\darwin.el") -Kind File
 Install-Link -Source (Join-Path $RepoRoot "emacs\windows.el") -Link (Join-Path $env:USERPROFILE ".spacemacs.d\windows.el") -Kind File
-Install-Link -Source (Join-Path $RepoRoot ".gitignore_global") -Link (Join-Path $env:USERPROFILE ".gitignore_global") -Kind File
+
+$obsoleteGitignoreGlobal = Join-Path $env:USERPROFILE ".gitignore_global"
+if ((Test-Path -LiteralPath $obsoleteGitignoreGlobal) -and ((Get-Item -LiteralPath $obsoleteGitignoreGlobal).LinkType)) {
+    $target = (Get-Item -LiteralPath $obsoleteGitignoreGlobal).Target
+    if ($target -like "*\.gitignore_global") {
+        Write-Host "Removing obsolete $obsoleteGitignoreGlobal"
+        Remove-Item -LiteralPath $obsoleteGitignoreGlobal -Force
+    }
+}
 
 Install-Spacemacs
 Install-WindowsEarlyInit

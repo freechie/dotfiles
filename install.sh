@@ -1149,7 +1149,6 @@ build_link_specs() {
         "$platform_dir/.bash_profile|$HOME/.bash_profile|.bash_profile in home directory"
         ".fzf.zsh|$HOME/.fzf.zsh|.fzf.zsh in home directory"
         ".gitconfig|$HOME/.gitconfig|.gitconfig in home directory"
-        ".gitignore_global|$HOME/.gitignore_global|.gitignore_global in home directory"
         "nvim|$HOME/.config/nvim|nvim in ~/.config directory"
         "$platform_dir/starship.toml|$HOME/.config/starship.toml|starship.toml in ~/.config directory"
         "emacs/.spacemacs|$HOME/.spacemacs|.spacemacs in home directory"
@@ -1239,6 +1238,26 @@ install_rectangle_pro_config() {
     run_cmd cp "$source_file" "$target_file"
 }
 
+remove_obsolete_gitignore_global() {
+    local target_link="$HOME/.gitignore_global"
+    local expected="$dir/.gitignore_global"
+
+    if [[ -L "$target_link" && "$target_link" -ef "$expected" ]]; then
+        echo "Removing obsolete $target_link"
+        run_cmd rm "$target_link"
+        return
+    fi
+
+    if [[ -L "$target_link" ]]; then
+        local current
+        current="$(readlink "$target_link" 2>/dev/null || true)"
+        if [[ "$current" == "$expected" || "$current" == *"/.gitignore_global" ]]; then
+            echo "Removing obsolete $target_link"
+            run_cmd rm "$target_link"
+        fi
+    fi
+}
+
 install_links() {
     local spec relative_source target_link label
     for spec in "${link_specs[@]}"; do
@@ -1246,6 +1265,7 @@ install_links() {
         ensure_symlink "$relative_source" "$target_link" "$label"
     done
 
+    remove_obsolete_gitignore_global
     install_rectangle_pro_config
 }
 

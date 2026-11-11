@@ -224,6 +224,29 @@ nvim/python-venv/
 nvim/nvim
 pyrightconfig.json
 graphify-out/
+.audit/
+
+# Local credential and key material (defense in depth; never commit these)
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_rsa_*
+!id_rsa_*.pub
+id_ed25519
+id_ed25519_*
+!id_ed25519_*.pub
+id_ecdsa
+id_ecdsa_*
+!id_ecdsa_*.pub
+id_dsa
+id_dsa_*
+!id_dsa_*.pub
+*.key
+credentials.json
+.netrc
+.npmrc
+.pgpass
 
 ### VisualStudioCode ###
 .vscode/*

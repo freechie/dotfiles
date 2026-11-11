@@ -525,7 +525,6 @@ MOCK
     ".bash_profile"
     ".fzf.zsh"
     ".gitconfig"
-    ".gitignore_global"
     "nvim"
     "starship.toml"
     "platforms/macos/.zshrc"

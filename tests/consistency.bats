@@ -15,14 +15,9 @@
   grep -q 'core.platform.windows' nvim/lua/core/platform/init.lua
 }
 
-@test "gitconfig excludesFile matches gitignore_global" {
-  # Parse the excludesFile value from .gitconfig
-  run grep 'excludesFile' .gitconfig
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"~/.gitignore_global"* ]]
-
-  # The referenced file must exist in the repo
-  [ -f ".gitignore_global" ]
+@test "gitconfig does not use a global excludes file" {
+  ! grep -q 'excludesFile' .gitconfig
+  [ ! -e ".gitignore_global" ]
 }
 
 @test "gitconfig parses and Hunk aliases are backed by installer" {
@@ -44,7 +39,6 @@
     ".bash_profile"
     ".fzf.zsh"
     ".gitconfig"
-    ".gitignore_global"
     "nvim"
     "starship.toml"
     "ghostty/config.macos"
