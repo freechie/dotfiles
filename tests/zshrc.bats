@@ -233,16 +233,17 @@ EOF
     source .zshrc 2>/tmp/zshrc_err
     sudo() {
       while [[ "$1" == -* ]]; do
-        if [[ "$1" == -p ]]; then
-          shift 2
-        else
-          shift
-        fi
+        case "$1" in
+          -p) shift 2 ;;
+          -v) return 0 ;;
+          *) shift ;;
+        esac
       done
       "$@"
     }
     softwareupdate() { echo "softwareupdate:$*"; }
     brew() {
+      echo "sudo-askpass:${SUDO_ASKPASS:+set}"
       if [ "$1" = "upgrade" ]; then
         echo "brew-upgrade:auto-update=${HOMEBREW_NO_AUTO_UPDATE:-unset}"
       else
@@ -253,6 +254,7 @@ EOF
   ' <<<'secret'
   [ "$status" -eq 0 ]
   [[ "$output" == *"softwareupdate:-i -a"* ]]
+  [[ "$output" == *"sudo-askpass:set"* ]]
   [[ "$output" == *"brew:update"* ]]
   [[ "$output" == *"brew-upgrade:auto-update=1"* ]]
   [[ "$output" == *"brew:cleanup"* ]]
